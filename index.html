@@ -1,14 +1,1720 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hello World</title>
-  <link href='/style.css' rel='stylesheet'>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MindTail</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&family=Nanum+Myeongjo:wght@400;700&display=swap');
+
+  :root {
+    --bg: #fdf8f3;
+    --surface: #ffffff;
+    --surface2: #f5ede3;
+    --primary: #c87941;
+    --primary-light: #e8a96a;
+    --primary-pale: #fdecd8;
+    --text: #2d2319;
+    --text-sub: #7a6250;
+    --text-muted: #b09a87;
+    --border: #e8ddd3;
+    --bot-bubble: #ffffff;
+    --user-bubble: #c87941;
+    --user-bubble-text: #ffffff;
+    --tab-active: #c87941;
+    --tab-inactive: #b09a87;
+    --green: #5a9e6f;
+    --green-pale: #e8f5ed;
+    --amber: #d4861a;
+    --amber-pale: #fef3e2;
+    --radius: 18px;
+    --radius-sm: 10px;
+    --shadow: 0 2px 16px rgba(45,35,25,0.08);
+    --shadow-lg: 0 8px 32px rgba(45,35,25,0.14);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: #e8ddd3;
+    font-family: 'Nanum Gothic', sans-serif;
+    color: var(--text);
+    overflow: hidden;
+  }
+
+  #app {
+    max-width: 430px;
+    margin: 0 auto;
+    height: 100dvh;
+    height: 100vh;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 40px rgba(0,0,0,0.18);
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--surface);
+    padding: 14px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+  .header-logo {
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: -0.5px;
+  }
+  .header-dog {
+    font-size: 13px;
+    color: var(--text-sub);
+    font-weight: 700;
+  }
+  .header-date {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ── TABS ── */
+  .tab-bar {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-shrink: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    z-index: 10;
+  }
+  .tab-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 10px 0 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.2s;
+    color: var(--tab-inactive);
+    font-family: 'Nanum Gothic', sans-serif;
+  }
+  .tab-btn.active { color: var(--tab-active); }
+  .tab-btn svg { width: 22px; height: 22px; }
+  .tab-label { font-size: 10px; font-weight: 700; }
+
+  /* ── CONTENT AREA ── */
+  .content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .screen { display: none; flex-direction: column; height: 100%; }
+  .screen.active { display: flex; }
+
+  /* ── ONBOARDING ── */
+  .onboarding-wrap {
+    position: absolute; inset: 0; z-index: 100;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+    padding: 40px 24px 40px;
+  }
+  .onboarding-wrap.hidden { display: none; }
+  .ob-logo {
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 6px;
+  }
+  .ob-tagline {
+    font-size: 14px;
+    color: var(--text-sub);
+    line-height: 1.6;
+    margin-bottom: 36px;
+  }
+  .ob-form-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+  .ob-field { margin-bottom: 16px; }
+  .ob-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-sub);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .ob-label .req { color: var(--primary); }
+  .ob-input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Nanum Gothic', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .ob-input:focus { border-color: var(--primary); }
+  .ob-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'Nanum Gothic', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .ob-btn:active { transform: scale(0.98); background: #b3682f; }
+  .ob-paw {
+    font-size: 56px;
+    margin-bottom: 12px;
+    line-height: 1;
+  }
+
+  /* ── CHAT SCREEN ── */
+  .chat-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+  }
+  .chat-container::-webkit-scrollbar { display: none; }
+
+  .bubble-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    animation: fadeUp 0.25s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .bubble-row.bot { justify-content: flex-start; }
+  .bubble-row.user { justify-content: flex-end; }
+
+  .bot-avatar {
+    width: 32px; height: 32px;
+    background: var(--primary-pale);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    align-self: flex-start;
+  }
+  .bubble {
+    max-width: 75%;
+    padding: 12px 15px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.6;
+    word-break: keep-all;
+  }
+  .bubble.bot {
+    background: var(--bot-bubble);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+    box-shadow: var(--shadow);
+  }
+  .bubble.user {
+    background: var(--user-bubble);
+    color: var(--user-bubble-text);
+    border-bottom-right-radius: 4px;
+    font-weight: 700;
+  }
+
+  /* ── ANSWER AREA ── */
+  .answer-area {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 14px 16px 16px;
+    flex-shrink: 0;
+  }
+  .answer-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    text-align: center;
+    font-weight: 700;
+  }
+  .answer-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .answer-btn {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    font-family: 'Nanum Gothic', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+  }
+  .answer-btn:hover { background: var(--primary-pale); border-color: var(--primary-light); }
+  .answer-btn:active { transform: scale(0.98); background: var(--primary-pale); }
+
+  /* ── COMPLETE STATE ── */
+  .complete-card {
+    margin: 16px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    box-shadow: var(--shadow);
+    text-align: center;
+  }
+  .complete-icon { font-size: 40px; margin-bottom: 12px; }
+  .complete-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+  .complete-sub {
+    font-size: 13px;
+    color: var(--text-sub);
+    line-height: 1.6;
+  }
+  .complete-score {
+    margin: 16px 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--primary-pale);
+    padding: 8px 20px;
+    border-radius: 100px;
+  }
+  .score-num {
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .score-label { font-size: 12px; color: var(--text-sub); font-weight: 700; }
+  .redo-btn {
+    margin-top: 14px;
+    padding: 12px 24px;
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Nanum Gothic', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .redo-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+  /* ── HISTORY SCREEN ── */
+  .screen-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+  }
+  .screen-scroll::-webkit-scrollbar { display: none; }
+  .history-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 2;
+  }
+  .history-item {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .history-item:active { transform: scale(0.98); }
+  .history-date { font-size: 13px; font-weight: 800; color: var(--text); }
+  .history-meta { font-size: 12px; color: var(--text-sub); margin-top: 3px; }
+  .score-badge {
+    display: flex; flex-direction: column; align-items: center;
+    background: var(--primary-pale);
+    border-radius: 10px;
+    padding: 6px 12px;
+    min-width: 56px;
+  }
+  .score-badge .num {
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1;
+  }
+  .score-badge .lbl { font-size: 10px; color: var(--text-sub); font-weight: 700; }
+  .score-badge.good { background: var(--green-pale); }
+  .score-badge.good .num { color: var(--green); }
+  .score-badge.warn { background: var(--amber-pale); }
+  .score-badge.warn .num { color: var(--amber); }
+
+  /* ── DETAIL MODAL ── */
+  .modal-backdrop {
+    display: none;
+    position: absolute; inset: 0; z-index: 50;
+    background: rgba(45,35,25,0.5);
+    align-items: flex-end;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal-sheet {
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 8px 20px 40px;
+    animation: slideUp 0.28s ease;
+  }
+  .modal-sheet::-webkit-scrollbar { display: none; }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .modal-handle {
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 12px auto 20px;
+  }
+  .modal-title {
+    font-size: 17px;
+    font-weight: 800;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .detail-row:last-of-type { border-bottom: none; }
+  .detail-q { font-size: 12px; color: var(--text-sub); line-height: 1.5; flex: 1; }
+  .detail-a { font-size: 13px; font-weight: 800; color: var(--text); text-align: right; }
+
+  /* ── REPORT SCREEN ── */
+  .report-period-btns {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .period-btn {
+    flex: 1;
+    padding: 10px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    font-family: 'Nanum Gothic', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .period-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+  }
+  .chart-wrap {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow);
+  }
+  .chart-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-sub);
+    margin-bottom: 12px;
+  }
+  canvas#reportChart {
+    width: 100% !important;
+    display: block;
+  }
+  .summary-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+  }
+  .summary-card-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-sub);
+    margin-bottom: 10px;
+  }
+  .summary-line {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.7;
+    padding: 4px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .summary-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--primary);
+    flex-shrink: 0;
+    margin-top: 7px;
+  }
+  .report-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 2;
+  }
+
+  /* ── SETTINGS SCREEN ── */
+  .settings-section {
+    background: var(--surface);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .settings-section-title {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text-sub);
+    padding: 14px 18px 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .settings-row {
+    padding: 14px 18px;
+    border-top: 1px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.15s;
+  }
+  .settings-row:first-of-type { border-top: none; }
+  .settings-row:active { background: var(--surface2); }
+  .settings-row-label { font-size: 14px; font-weight: 700; color: var(--text); }
+  .settings-row-sub { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+  .settings-row-arrow { color: var(--text-muted); font-size: 16px; }
+  .danger { color: #c0392b; }
+
+  /* ── PROFILE EDIT ── */
+  .profile-edit-form {
+    padding: 0 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(45,35,25,0.88);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    z-index: 200;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ── CONFIRM MODAL ── */
+  .confirm-modal {
+    display: none;
+    position: absolute; inset: 0; z-index: 150;
+    background: rgba(45,35,25,0.5);
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .confirm-modal.open { display: flex; }
+  .confirm-box {
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 24px 20px;
+    width: 100%;
+    text-align: center;
+    animation: fadeUp 0.2s ease;
+  }
+  .confirm-title { font-size: 16px; font-weight: 800; margin-bottom: 10px; }
+  .confirm-sub { font-size: 13px; color: var(--text-sub); line-height: 1.6; margin-bottom: 20px; }
+  .confirm-btns { display: flex; gap: 10px; }
+  .confirm-cancel {
+    flex: 1; padding: 13px;
+    background: var(--surface2);
+    border: none; border-radius: 10px;
+    font-family: 'Nanum Gothic', sans-serif;
+    font-size: 14px; font-weight: 700;
+    color: var(--text-sub); cursor: pointer;
+  }
+  .confirm-ok {
+    flex: 1; padding: 13px;
+    background: #c0392b;
+    border: none; border-radius: 10px;
+    font-family: 'Nanum Gothic', sans-serif;
+    font-size: 14px; font-weight: 700;
+    color: #fff; cursor: pointer;
+  }
+
+  /* ── TYPING INDICATOR ── */
+  .typing-dots {
+    display: flex; gap: 4px; align-items: center;
+    padding: 4px 0;
+  }
+  .typing-dots span {
+    width: 6px; height: 6px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    animation: typingBounce 1.2s infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); }
+  }
+
+  .no-record-msg {
+    padding: 20px 16px 0;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+</style>
 </head>
 <body>
-  <h1>Hello, world!</h1>
-  <button onclick="console.log('hello');">Press me</button>
-  <script defer type="text/javascript" src="/main.js"></script>
+<div id="app">
+  <!-- ONBOARDING -->
+  <div class="onboarding-wrap" id="onboarding">
+    <div class="ob-paw">🐾</div>
+    <div class="ob-logo">MindTail</div>
+    <div class="ob-tagline">매일 10초, 반려견의 인지 행동 변화를<br>기록하고 관찰하는 앱이야.</div>
+    <div class="ob-form-title">우리 강아지를 알려줘</div>
+    <div class="ob-field">
+      <div class="ob-label">강아지 이름 <span class="req">*</span></div>
+      <input class="ob-input" id="ob-name" placeholder="예: 뭉이" type="text" maxlength="20">
+    </div>
+    <div class="ob-field">
+      <div class="ob-label">나이 <span class="req">*</span></div>
+      <input class="ob-input" id="ob-age" placeholder="예: 13살" type="text" maxlength="10">
+    </div>
+    <div class="ob-field">
+      <div class="ob-label">품종 <span style="color:var(--text-muted);font-weight:400">(선택)</span></div>
+      <input class="ob-input" id="ob-breed" placeholder="예: 말티즈" type="text" maxlength="30">
+    </div>
+    <div class="ob-field">
+      <div class="ob-label">체중 <span style="color:var(--text-muted);font-weight:400">(선택)</span></div>
+      <input class="ob-input" id="ob-weight" placeholder="예: 3.5kg" type="text" maxlength="10">
+    </div>
+    <button class="ob-btn" onclick="saveOnboarding()">시작하기</button>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-logo">MindTail</div>
+    <div style="text-align:right">
+      <div class="header-dog" id="header-dog-name">—</div>
+      <div class="header-date" id="header-date">—</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- TAB 1: 오늘 체크 -->
+    <div class="screen active" id="screen-today">
+      <!-- chat area -->
+      <div class="chat-container" id="chatContainer"></div>
+      <!-- answer area -->
+      <div class="answer-area" id="answerArea" style="display:none">
+        <div class="answer-hint">아래 중 하나를 선택해줘</div>
+        <div class="answer-btns" id="answerBtns"></div>
+      </div>
+      <!-- complete card -->
+      <div id="completeArea" style="display:none; overflow-y:auto; flex:1;">
+        <div class="chat-container" id="completeChatContainer"></div>
+        <div class="complete-card" id="completeCard">
+          <div class="complete-icon">✅</div>
+          <div class="complete-title" id="completeMsgTitle">오늘 기록이 저장됐어.</div>
+          <div class="complete-score">
+            <span class="score-num" id="completeScoreNum">—</span>
+            <span class="score-label">Mind Score</span>
+          </div>
+          <div class="complete-sub" id="completeMsgSub">—</div>
+          <div class="complete-sub" style="margin-top:10px;font-size:12px;color:var(--text-muted)">변화가 계속되면 병원 상담 때 이 기록을 참고해줘.</div>
+          <button class="redo-btn" onclick="redoToday()">오늘 기록 다시 하기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: 기록 -->
+    <div class="screen" id="screen-history">
+      <div class="screen-scroll" id="historyList">
+        <div class="history-empty">아직 기록이 없어.<br>오늘 체크를 먼저 해봐.</div>
+      </div>
+    </div>
+
+    <!-- TAB 3: 리포트 -->
+    <div class="screen" id="screen-report">
+      <div class="screen-scroll" id="reportContent">
+        <div class="report-empty">기록이 쌓이면 리포트를 볼 수 있어.</div>
+      </div>
+    </div>
+
+    <!-- TAB 4: 설정 -->
+    <div class="screen" id="screen-settings">
+      <div class="screen-scroll">
+        <div style="padding:16px">
+          <div class="settings-section" id="profileSection">
+            <div class="settings-section-title">반려견 프로필</div>
+            <div class="profile-edit-form" id="profileEditForm">
+              <div class="ob-field" style="margin:0">
+                <div class="ob-label">강아지 이름 <span class="req">*</span></div>
+                <input class="ob-input" id="set-name" placeholder="예: 뭉이" type="text" maxlength="20">
+              </div>
+              <div class="ob-field" style="margin:0">
+                <div class="ob-label">나이 <span class="req">*</span></div>
+                <input class="ob-input" id="set-age" placeholder="예: 13살" type="text" maxlength="10">
+              </div>
+              <div class="ob-field" style="margin:0">
+                <div class="ob-label">품종</div>
+                <input class="ob-input" id="set-breed" placeholder="예: 말티즈" type="text" maxlength="30">
+              </div>
+              <div class="ob-field" style="margin:0">
+                <div class="ob-label">체중</div>
+                <input class="ob-input" id="set-weight" placeholder="예: 3.5kg" type="text" maxlength="10">
+              </div>
+              <button class="ob-btn" style="margin:0" onclick="saveProfileEdit()">저장하기</button>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">데이터</div>
+            <div class="settings-row" onclick="exportData()">
+              <div>
+                <div class="settings-row-label">데이터 JSON 복사</div>
+                <div class="settings-row-sub">기록 전체를 클립보드에 복사해</div>
+              </div>
+              <div class="settings-row-arrow">→</div>
+            </div>
+            <div class="settings-row" onclick="showResetConfirm()">
+              <div>
+                <div class="settings-row-label danger">전체 데이터 초기화</div>
+                <div class="settings-row-sub">모든 기록과 프로필이 삭제돼</div>
+              </div>
+              <div class="settings-row-arrow danger">→</div>
+            </div>
+          </div>
+
+          <div style="text-align:center;padding:12px 0 4px;font-size:11px;color:var(--text-muted);">
+            MindTail v1.0 · 이 앱은 의료 진단 도구가 아니에요
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-today" onclick="switchTab('today')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      <span class="tab-label">오늘 체크</span>
+    </button>
+    <button class="tab-btn" id="tab-history" onclick="switchTab('history')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </svg>
+      <span class="tab-label">기록</span>
+    </button>
+    <button class="tab-btn" id="tab-report" onclick="switchTab('report')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10"/>
+        <line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="6" y1="20" x2="6" y2="14"/>
+      </svg>
+      <span class="tab-label">리포트</span>
+    </button>
+    <button class="tab-btn" id="tab-settings" onclick="switchTab('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+      <span class="tab-label">설정</span>
+    </button>
+  </div>
+
+  <!-- DETAIL MODAL -->
+  <div class="modal-backdrop" id="detailModal" onclick="closeDetailModal(event)">
+    <div class="modal-sheet" id="detailSheet">
+      <div class="modal-handle"></div>
+      <div id="detailContent"></div>
+    </div>
+  </div>
+
+  <!-- CONFIRM MODAL -->
+  <div class="confirm-modal" id="confirmModal">
+    <div class="confirm-box">
+      <div class="confirm-title">전체 데이터를 초기화할게?</div>
+      <div class="confirm-sub">모든 기록과 프로필이 삭제돼.<br>이 작업은 되돌릴 수 없어.</div>
+      <div class="confirm-btns">
+        <button class="confirm-cancel" onclick="closeResetConfirm()">취소</button>
+        <button class="confirm-ok" onclick="resetAll()">초기화</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────
+const PREFIX = 'MINDTAIL_V1';
+const KEY = {
+  PROFILE: `${PREFIX}:profile`,
+  INDEX: `${PREFIX}:index`,
+  record: (d) => `${PREFIX}:record:${d}`,
+  draft: (d) => `${PREFIX}:draft:${d}`,
+};
+
+// ─────────────────────────────────────────────
+// STORAGE HELPERS
+// ─────────────────────────────────────────────
+function ls_get(key) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch(e) { return null; }
+}
+function ls_set(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+}
+function ls_del(key) {
+  try { localStorage.removeItem(key); } catch(e) {}
+}
+
+// ─────────────────────────────────────────────
+// PROFILE
+// ─────────────────────────────────────────────
+function loadProfile() { return ls_get(KEY.PROFILE); }
+function saveProfile(p) { ls_set(KEY.PROFILE, p); }
+
+// ─────────────────────────────────────────────
+// INDEX (날짜 목록)
+// ─────────────────────────────────────────────
+function loadIndex() { return ls_get(KEY.INDEX) || []; }
+function saveIndex(arr) { ls_set(KEY.INDEX, arr); }
+function addToIndex(date) {
+  const idx = loadIndex();
+  if (!idx.includes(date)) { idx.push(date); saveIndex(idx); }
+}
+
+// ─────────────────────────────────────────────
+// RECORD
+// ─────────────────────────────────────────────
+function loadRecord(date) { return ls_get(KEY.record(date)); }
+function saveRecord(date, data) {
+  ls_set(KEY.record(date), data);
+  addToIndex(date);
+}
+
+// ─────────────────────────────────────────────
+// DRAFT
+// ─────────────────────────────────────────────
+function loadDraft(date) { return ls_get(KEY.draft(date)); }
+function saveDraft(date, data) { ls_set(KEY.draft(date), data); }
+function deleteDraft(date) { ls_del(KEY.draft(date)); }
+
+// ─────────────────────────────────────────────
+// DATE HELPERS
+// ─────────────────────────────────────────────
+function getTodayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function formatDisplayDate(dateStr) {
+  const [y,m,d] = dateStr.split('-');
+  const days = ['일','월','화','수','목','금','토'];
+  const dow = new Date(dateStr).getDay();
+  return `${y}년 ${parseInt(m)}월 ${parseInt(d)}일 (${days[dow]})`;
+}
+
+// ─────────────────────────────────────────────
+// MIND SCORE
+// ─────────────────────────────────────────────
+function calculateMindScore(answers) {
+  let score = 100;
+  const sleepMap = { '자다 깨다 해': -4, '밤새 서성였어': -8 };
+  const interactionMap = { '좀 느렸어': -5, '거의 반응 없었어': -10 };
+  const disorientMap = { '가끔 있었어': -4, '자주 그랬어': -8 };
+  score += (sleepMap[answers.sleep] || 0);
+  score += (interactionMap[answers.interaction] || 0);
+  score += (disorientMap[answers.disorientation] || 0);
+  return Math.max(0, Math.min(100, score));
+}
+
+// ─────────────────────────────────────────────
+// SUMMARY
+// ─────────────────────────────────────────────
+function generateSummary(record) {
+  const score = record.mindScore;
+  const flags = record.flags;
+  const warnCount = Object.values(flags).filter(Boolean).length;
+  if (score >= 88 && warnCount === 0) return '비교적 안정적';
+  if (score >= 80 && warnCount <= 1) return '변화 소폭 관찰됨';
+  return '행동 변화 관찰됨';
+}
+
+function generateCompleteMsg(record) {
+  const score = record.mindScore;
+  const flags = record.flags;
+  const warnCount = Object.values(flags).filter(Boolean).length;
+  if (score >= 88 && warnCount === 0) {
+    return '최근 인지 행동은 비교적 안정적으로 관찰돼.';
+  }
+  return '최근 며칠 동안 행동 변화가 관찰돼. 기록을 계속 확인해보자.';
+}
+
+// ─────────────────────────────────────────────
+// QUESTIONS
+// ─────────────────────────────────────────────
+function getQuestions(dogName) {
+  return [
+    {
+      id: 'sleep',
+      text: `${dogName}가 어제 밤에 잠은 잘 잤어?`,
+      options: ['꿀잠 잤어', '자다 깨다 해', '밤새 서성였어']
+    },
+    {
+      id: 'interaction',
+      text: `${dogName}가 오늘 부르면 반응은 어땠어?`,
+      options: ['바로 반응했어', '좀 느렸어', '거의 반응 없었어']
+    },
+    {
+      id: 'disorientation',
+      text: `${dogName}가 집 안에서 길을 헤매는 느낌은 있었어?`,
+      options: ['전혀 없었어', '가끔 있었어', '자주 그랬어']
+    }
+  ];
+}
+
+const EXTRA_QUESTIONS = {
+  A: {
+    id: 'extraA',
+    text: '그 모습이 주로 언제였어?',
+    options: ['밤', '낮', '둘 다']
+  },
+  B: {
+    id: 'extraB',
+    text: '그 변화가 언제부터 느껴졌어?',
+    options: ['최근 1주', '최근 1달', '그 이전']
+  },
+  C: {
+    id: 'extraC',
+    text: (name) => `${name}가 멍하게 있는 시간이 늘었어?`,
+    options: ['아니야', '조금 늘었어', '많이 늘었어']
+  }
+};
+
+function getExtraQuestions(answers, dogName) {
+  const extras = [];
+  if (answers.sleep === '밤새 서성였어') {
+    extras.push({ ...EXTRA_QUESTIONS.A });
+    extras.push({ ...EXTRA_QUESTIONS.B });
+  } else if (answers.interaction === '거의 반응 없었어') {
+    extras.push({ ...EXTRA_QUESTIONS.B });
+    const cq = { ...EXTRA_QUESTIONS.C, text: EXTRA_QUESTIONS.C.text(dogName) };
+    extras.push(cq);
+  } else if (answers.disorientation === '자주 그랬어') {
+    extras.push({ ...EXTRA_QUESTIONS.B });
+    extras.push({ ...EXTRA_QUESTIONS.A });
+  }
+  return extras.slice(0, 2);
+}
+
+// ─────────────────────────────────────────────
+// CHAT STATE
+// ─────────────────────────────────────────────
+let chatState = {
+  sessionDate: null,
+  checkStartedAt: null,
+  currentStep: 0,
+  chatHistory: [],
+  draftAnswers: {},
+  baseQuestions: [],
+  extraQuestions: [],
+  phase: 'base', // 'base' | 'extra' | 'done'
+  extraIndex: 0,
+};
+
+// ─────────────────────────────────────────────
+// CHAT RENDER
+// ─────────────────────────────────────────────
+function renderChat() {
+  const container = document.getElementById('chatContainer');
+  container.innerHTML = '';
+  chatState.chatHistory.forEach(msg => {
+    const row = document.createElement('div');
+    row.className = `bubble-row ${msg.role}`;
+    if (msg.role === 'bot') {
+      row.innerHTML = `
+        <div class="bot-avatar">🐾</div>
+        <div class="bubble bot">${msg.text}</div>
+      `;
+    } else {
+      row.innerHTML = `<div class="bubble user">${msg.text}</div>`;
+    }
+    container.appendChild(row);
+  });
+  container.scrollTop = container.scrollHeight;
+}
+
+function addBotMessage(text, delay = 0) {
+  return new Promise(resolve => {
+    // typing indicator
+    const container = document.getElementById('chatContainer');
+    const typingRow = document.createElement('div');
+    typingRow.className = 'bubble-row bot';
+    typingRow.innerHTML = `
+      <div class="bot-avatar">🐾</div>
+      <div class="bubble bot"><div class="typing-dots"><span></span><span></span><span></span></div></div>
+    `;
+    container.appendChild(typingRow);
+    container.scrollTop = container.scrollHeight;
+
+    setTimeout(() => {
+      typingRow.remove();
+      chatState.chatHistory.push({ role: 'bot', text });
+      renderChat();
+      resolve();
+    }, delay || 600);
+  });
+}
+
+function addUserMessage(text) {
+  chatState.chatHistory.push({ role: 'user', text });
+  renderChat();
+}
+
+function showAnswerButtons(question) {
+  const area = document.getElementById('answerArea');
+  const btns = document.getElementById('answerBtns');
+  area.style.display = 'block';
+  btns.innerHTML = '';
+  question.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.textContent = opt;
+    btn.onclick = () => handleAnswer(question, opt);
+    btns.appendChild(btn);
+  });
+}
+
+function hideAnswerButtons() {
+  document.getElementById('answerArea').style.display = 'none';
+}
+
+// ─────────────────────────────────────────────
+// CHAT SESSION
+// ─────────────────────────────────────────────
+async function startTodaySession() {
+  const profile = loadProfile();
+  if (!profile) return;
+
+  const sessionDate = getTodayStr();
+  chatState.sessionDate = sessionDate;
+  chatState.checkStartedAt = Date.now();
+  chatState.currentStep = 0;
+  chatState.chatHistory = [];
+  chatState.draftAnswers = {};
+  chatState.baseQuestions = getQuestions(profile.name);
+  chatState.extraQuestions = [];
+  chatState.phase = 'base';
+  chatState.extraIndex = 0;
+
+  document.getElementById('chatContainer').style.display = 'flex';
+  document.getElementById('completeArea').style.display = 'none';
+  document.getElementById('answerArea').style.display = 'none';
+
+  saveDraftState();
+
+  await addBotMessage(`안녕! ${profile.name} 오늘 어떻게 지냈어?`, 300);
+  await askCurrentQuestion();
+}
+
+async function askCurrentQuestion() {
+  const profile = loadProfile();
+  let question;
+
+  if (chatState.phase === 'base') {
+    question = chatState.baseQuestions[chatState.currentStep];
+  } else if (chatState.phase === 'extra') {
+    question = chatState.extraQuestions[chatState.extraIndex];
+  }
+
+  if (!question) {
+    finishSession();
+    return;
+  }
+
+  await addBotMessage(question.text);
+  showAnswerButtons(question);
+}
+
+async function handleAnswer(question, answer) {
+  hideAnswerButtons();
+  addUserMessage(answer);
+  chatState.draftAnswers[question.id] = answer;
+  saveDraftState();
+
+  if (chatState.phase === 'base') {
+    chatState.currentStep++;
+    if (chatState.currentStep >= chatState.baseQuestions.length) {
+      // 기본 질문 완료 → 추가 질문 결정
+      const profile = loadProfile();
+      chatState.extraQuestions = getExtraQuestions(chatState.draftAnswers, profile.name);
+      if (chatState.extraQuestions.length > 0) {
+        chatState.phase = 'extra';
+        chatState.extraIndex = 0;
+        await askCurrentQuestion();
+      } else {
+        finishSession();
+      }
+    } else {
+      await askCurrentQuestion();
+    }
+  } else if (chatState.phase === 'extra') {
+    chatState.extraIndex++;
+    if (chatState.extraIndex >= chatState.extraQuestions.length) {
+      finishSession();
+    } else {
+      await askCurrentQuestion();
+    }
+  }
+}
+
+function finishSession() {
+  const profile = loadProfile();
+  const answers = chatState.draftAnswers;
+
+  // extra answers 정리
+  const extra1 = chatState.extraQuestions[0] ? {
+    question: chatState.extraQuestions[0].text,
+    answer: answers[chatState.extraQuestions[0].id] || ''
+  } : null;
+  const extra2 = chatState.extraQuestions[1] ? {
+    question: chatState.extraQuestions[1].text,
+    answer: answers[chatState.extraQuestions[1].id] || ''
+  } : null;
+
+  const record = {
+    date: chatState.sessionDate,
+    checkStartedAt: chatState.checkStartedAt,
+    sessionDate: chatState.sessionDate,
+    answers: {
+      sleep: answers.sleep || '',
+      interaction: answers.interaction || '',
+      disorientation: answers.disorientation || '',
+      extra1: extra1 || undefined,
+      extra2: extra2 || undefined,
+    },
+    mindScore: calculateMindScore(answers),
+    flags: {
+      sleepWorse: answers.sleep === '밤새 서성였어',
+      interactionWorse: answers.interaction === '거의 반응 없었어',
+      disorientationWorse: answers.disorientation === '자주 그랬어',
+    }
+  };
+
+  saveRecord(chatState.sessionDate, record);
+  deleteDraft(chatState.sessionDate);
+  chatState.phase = 'done';
+
+  showCompleteScreen(record, profile.name);
+}
+
+function showCompleteScreen(record, dogName) {
+  document.getElementById('answerArea').style.display = 'none';
+  // move chat to complete area
+  const chatHistory = document.getElementById('chatContainer');
+  document.getElementById('completeArea').style.display = 'flex';
+  document.getElementById('completeArea').style.flexDirection = 'column';
+
+  // copy chat bubbles
+  const completeChatContainer = document.getElementById('completeChatContainer');
+  completeChatContainer.innerHTML = chatHistory.innerHTML;
+  chatHistory.style.display = 'none';
+
+  // show complete card
+  const msg = generateCompleteMsg(record);
+  document.getElementById('completeMsgTitle').textContent = `오늘 기록이 저장됐어.`;
+  document.getElementById('completeMsgSub').textContent = msg;
+  document.getElementById('completeScoreNum').textContent = record.mindScore;
+  document.getElementById('completeCard').style.display = 'block';
+
+  const completeArea = document.getElementById('completeArea');
+  setTimeout(() => { completeArea.scrollTop = completeArea.scrollHeight; }, 100);
+}
+
+function showAlreadyDoneScreen(record, dogName) {
+  document.getElementById('chatContainer').style.display = 'none';
+  document.getElementById('answerArea').style.display = 'none';
+  document.getElementById('completeArea').style.display = 'flex';
+  document.getElementById('completeArea').style.flexDirection = 'column';
+  document.getElementById('completeChatContainer').innerHTML = `
+    <div class="bubble-row bot">
+      <div class="bot-avatar">🐾</div>
+      <div class="bubble bot">오늘 기록은 이미 완료됐어.<br>수고했어! 내일 또 봐.</div>
+    </div>
+  `;
+  const msg = generateCompleteMsg(record);
+  document.getElementById('completeMsgTitle').textContent = '오늘 기록은 이미 완료됐어.';
+  document.getElementById('completeMsgSub').textContent = msg;
+  document.getElementById('completeScoreNum').textContent = record.mindScore;
+  document.getElementById('completeCard').style.display = 'block';
+}
+
+function redoToday() {
+  const sessionDate = getTodayStr();
+  ls_del(KEY.record(sessionDate));
+  // remove from index
+  const idx = loadIndex().filter(d => d !== sessionDate);
+  saveIndex(idx);
+  deleteDraft(sessionDate);
+
+  document.getElementById('completeArea').style.display = 'none';
+  document.getElementById('chatContainer').style.display = 'flex';
+  document.getElementById('chatContainer').innerHTML = '';
+  startTodaySession();
+}
+
+// ─────────────────────────────────────────────
+// DRAFT PERSISTENCE
+// ─────────────────────────────────────────────
+function saveDraftState() {
+  if (!chatState.sessionDate) return;
+  saveDraft(chatState.sessionDate, {
+    sessionDate: chatState.sessionDate,
+    checkStartedAt: chatState.checkStartedAt,
+    currentStep: chatState.currentStep,
+    chatHistory: chatState.chatHistory,
+    draftAnswers: chatState.draftAnswers,
+    phase: chatState.phase,
+    extraIndex: chatState.extraIndex,
+    extraQuestions: chatState.extraQuestions,
+  });
+}
+
+function restoreDraft() {
+  const sessionDate = getTodayStr();
+  const draft = loadDraft(sessionDate);
+  if (!draft) return false;
+
+  const profile = loadProfile();
+  chatState.sessionDate = draft.sessionDate;
+  chatState.checkStartedAt = draft.checkStartedAt;
+  chatState.currentStep = draft.currentStep;
+  chatState.chatHistory = draft.chatHistory || [];
+  chatState.draftAnswers = draft.draftAnswers || {};
+  chatState.phase = draft.phase || 'base';
+  chatState.extraIndex = draft.extraIndex || 0;
+  chatState.baseQuestions = getQuestions(profile.name);
+  chatState.extraQuestions = draft.extraQuestions || [];
+
+  document.getElementById('chatContainer').style.display = 'flex';
+  document.getElementById('completeArea').style.display = 'none';
+  renderChat();
+
+  // 현재 질문 다시 보여주기
+  let currentQ;
+  if (chatState.phase === 'base') {
+    currentQ = chatState.baseQuestions[chatState.currentStep];
+  } else if (chatState.phase === 'extra') {
+    currentQ = chatState.extraQuestions[chatState.extraIndex];
+  }
+
+  if (currentQ) showAnswerButtons(currentQ);
+  return true;
+}
+
+// ─────────────────────────────────────────────
+// INIT TODAY TAB
+// ─────────────────────────────────────────────
+function initTodayTab() {
+  const sessionDate = getTodayStr();
+  const existingRecord = loadRecord(sessionDate);
+
+  if (existingRecord) {
+    const profile = loadProfile();
+    showAlreadyDoneScreen(existingRecord, profile ? profile.name : '');
+    return;
+  }
+
+  // draft 복구 시도
+  if (restoreDraft()) return;
+
+  // 새 세션 시작
+  startTodaySession();
+}
+
+// ─────────────────────────────────────────────
+// HISTORY TAB
+// ─────────────────────────────────────────────
+function renderHistory() {
+  const idx = loadIndex().sort((a, b) => b.localeCompare(a));
+  const container = document.getElementById('historyList');
+
+  if (idx.length === 0) {
+    container.innerHTML = '<div class="history-empty">아직 기록이 없어.<br>오늘 체크를 먼저 해봐.</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  idx.forEach(date => {
+    const record = loadRecord(date);
+    if (!record) return;
+    const summary = generateSummary(record);
+    const score = record.mindScore;
+    const badgeClass = score >= 88 ? 'good' : score >= 80 ? '' : 'warn';
+
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.innerHTML = `
+      <div>
+        <div class="history-date">${formatDisplayDate(date)}</div>
+        <div class="history-meta">${summary}</div>
+      </div>
+      <div class="score-badge ${badgeClass}">
+        <div class="num">${score}</div>
+        <div class="lbl">점</div>
+      </div>
+    `;
+    item.onclick = () => showDetailModal(record);
+    container.appendChild(item);
+  });
+}
+
+function showDetailModal(record) {
+  const modal = document.getElementById('detailModal');
+  const content = document.getElementById('detailContent');
+  const a = record.answers;
+
+  const extraRows = [a.extra1, a.extra2].filter(Boolean).map(e =>
+    `<div class="detail-row">
+      <div class="detail-q">${e.question}</div>
+      <div class="detail-a">${e.answer}</div>
+    </div>`
+  ).join('');
+
+  content.innerHTML = `
+    <div class="modal-title">${formatDisplayDate(record.sessionDate)} 기록</div>
+    <div class="detail-row" style="background:var(--primary-pale);border-radius:10px;padding:14px 16px;margin-bottom:12px;border:none;">
+      <div class="detail-q" style="color:var(--primary);font-weight:800">Mind Score</div>
+      <div class="detail-a" style="color:var(--primary);font-size:22px;font-family:'Nanum Myeongjo',serif">${record.mindScore}점</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-q">수면 / 배회</div>
+      <div class="detail-a">${a.sleep}</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-q">보호자 반응</div>
+      <div class="detail-a">${a.interaction}</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-q">방향 감각</div>
+      <div class="detail-a">${a.disorientation}</div>
+    </div>
+    ${extraRows}
+    <div style="margin-top:16px;padding:12px 14px;background:var(--surface2);border-radius:10px;font-size:12px;color:var(--text-sub);line-height:1.6">
+      💡 변화가 계속되면 병원 상담 때 이 기록을 참고해줘.
+    </div>
+  `;
+
+  modal.classList.add('open');
+}
+
+function closeDetailModal(e) {
+  if (e.target === document.getElementById('detailModal')) {
+    document.getElementById('detailModal').classList.remove('open');
+  }
+}
+
+// ─────────────────────────────────────────────
+// REPORT TAB
+// ─────────────────────────────────────────────
+let reportPeriod = 7;
+
+function renderReport() {
+  const container = document.getElementById('reportContent');
+  const allIdx = loadIndex().sort((a, b) => a.localeCompare(b));
+
+  if (allIdx.length === 0) {
+    container.innerHTML = '<div class="report-empty">기록이 쌓이면 리포트를 볼 수 있어.<br>오늘 체크부터 시작해봐.</div>';
+    return;
+  }
+
+  const today = getTodayStr();
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - reportPeriod + 1);
+  const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
+  const filtered = allIdx.filter(d => d >= cutoffStr);
+  const records = filtered.map(d => loadRecord(d)).filter(Boolean);
+
+  // build chart data
+  const chartDates = [];
+  const chartScores = [];
+  for (let i = reportPeriod - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    chartDates.push(ds);
+    const rec = loadRecord(ds);
+    chartScores.push(rec ? rec.mindScore : null);
+  }
+
+  // summaries
+  const sleepBad = records.filter(r => r.answers.sleep === '밤새 서성였어').length;
+  const interBad = records.filter(r => r.answers.interaction === '거의 반응 없었어').length;
+  const disoriBad = records.filter(r => r.answers.disorientation === '자주 그랬어').length;
+  const scoreArr = records.map(r => r.mindScore);
+  const avgScore = scoreArr.length > 0 ? Math.round(scoreArr.reduce((a,b)=>a+b,0)/scoreArr.length) : null;
+
+  const isStable = avgScore !== null && avgScore >= 85 && sleepBad === 0 && interBad === 0 && disoriBad === 0;
+  const overallMsg = isStable
+    ? '최근 기록 흐름은 비교적 안정적이야.'
+    : '최근 기록에서 행동 변화가 관찰됐어. 지속되면 수의사 상담 때 참고해봐.';
+
+  container.innerHTML = `
+    <div style="padding:16px">
+      <div class="report-period-btns">
+        <button class="period-btn ${reportPeriod===7?'active':''}" onclick="setReportPeriod(7)">최근 7일</button>
+        <button class="period-btn ${reportPeriod===30?'active':''}" onclick="setReportPeriod(30)">최근 30일</button>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="chart-title">Mind Score 변화 (최근 ${reportPeriod}일)</div>
+        <canvas id="reportChart" height="140"></canvas>
+        ${records.length === 0 ? '<div style="text-align:center;padding:30px 0;color:var(--text-muted);font-size:13px">기록이 없어</div>' : ''}
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-card-title">관찰 요약</div>
+        ${avgScore !== null ? `<div class="summary-line"><div class="summary-dot"></div>최근 ${reportPeriod}일 평균 Mind Score는 ${avgScore}점이야.</div>` : ''}
+        ${sleepBad > 0 ? `<div class="summary-line"><div class="summary-dot" style="background:#d4861a"></div>밤 배회 응답이 ${sleepBad}회 관찰됐어.</div>` : ''}
+        ${interBad > 0 ? `<div class="summary-line"><div class="summary-dot" style="background:#d4861a"></div>반응 저하 응답이 ${interBad}회 기록됐어.</div>` : ''}
+        ${disoriBad > 0 ? `<div class="summary-line"><div class="summary-dot" style="background:#d4861a"></div>방향 감각 저하 응답이 ${disoriBad}회 관찰됐어.</div>` : ''}
+        <div class="summary-line" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+          <div class="summary-dot" style="background:${isStable ? 'var(--green)' : 'var(--amber)'}"></div>
+          ${overallMsg}
+        </div>
+        ${records.length > 0 ? `<div style="font-size:11px;color:var(--text-muted);margin-top:10px;line-height:1.6">변화가 계속되면 병원 상담 때 이 기록을 참고해줘.</div>` : ''}
+      </div>
+    </div>
+  `;
+
+  if (records.length > 0) {
+    setTimeout(() => drawChart(chartDates, chartScores), 50);
+  }
+}
+
+function setReportPeriod(n) {
+  reportPeriod = n;
+  renderReport();
+}
+
+function drawChart(dates, scores) {
+  const canvas = document.getElementById('reportChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.offsetWidth;
+  const h = 140;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.scale(dpr, dpr);
+
+  const padL = 32, padR = 12, padT = 10, padB = 28;
+  const chartW = w - padL - padR;
+  const chartH = h - padT - padB;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // grid lines
+  ctx.strokeStyle = '#e8ddd3';
+  ctx.lineWidth = 1;
+  [0, 25, 50, 75, 100].forEach(val => {
+    const y = padT + chartH - (val / 100) * chartH;
+    ctx.beginPath();
+    ctx.moveTo(padL, y);
+    ctx.lineTo(padL + chartW, y);
+    ctx.stroke();
+    ctx.fillStyle = '#b09a87';
+    ctx.font = `${10 * dpr / dpr}px Nanum Gothic`;
+    ctx.textAlign = 'right';
+    ctx.fillText(val, padL - 4, y + 3);
+  });
+
+  // collect valid points
+  const points = [];
+  const n = dates.length;
+  dates.forEach((d, i) => {
+    if (scores[i] !== null) {
+      const x = padL + (i / (n - 1 || 1)) * chartW;
+      const y = padT + chartH - (scores[i] / 100) * chartH;
+      points.push({ x, y, score: scores[i], label: d.slice(5) });
+    }
+  });
+
+  if (points.length === 0) return;
+
+  // line
+  ctx.beginPath();
+  ctx.strokeStyle = '#c87941';
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  points.forEach((p, i) => {
+    if (i === 0) ctx.moveTo(p.x, p.y);
+    else ctx.lineTo(p.x, p.y);
+  });
+  ctx.stroke();
+
+  // fill area
+  ctx.beginPath();
+  points.forEach((p, i) => {
+    if (i === 0) ctx.moveTo(p.x, p.y);
+    else ctx.lineTo(p.x, p.y);
+  });
+  ctx.lineTo(points[points.length-1].x, padT + chartH);
+  ctx.lineTo(points[0].x, padT + chartH);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0, padT, 0, padT + chartH);
+  grad.addColorStop(0, 'rgba(200,121,65,0.18)');
+  grad.addColorStop(1, 'rgba(200,121,65,0)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // dots + labels
+  points.forEach(p => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#c87941';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+  });
+
+  // x-axis labels (show every nth)
+  ctx.fillStyle = '#b09a87';
+  ctx.textAlign = 'center';
+  ctx.font = `10px Nanum Gothic`;
+  const step = Math.ceil(n / 6);
+  dates.forEach((d, i) => {
+    if (i % step === 0 || i === n - 1) {
+      const x = padL + (i / (n - 1 || 1)) * chartW;
+      ctx.fillText(d.slice(5), x, h - 6);
+    }
+  });
+}
+
+// ─────────────────────────────────────────────
+// SETTINGS
+// ─────────────────────────────────────────────
+function loadSettingsForm() {
+  const profile = loadProfile();
+  if (!profile) return;
+  document.getElementById('set-name').value = profile.name || '';
+  document.getElementById('set-age').value = profile.age || '';
+  document.getElementById('set-breed').value = profile.breed || '';
+  document.getElementById('set-weight').value = profile.weight || '';
+}
+
+function saveProfileEdit() {
+  const name = document.getElementById('set-name').value.trim();
+  const age = document.getElementById('set-age').value.trim();
+  if (!name || !age) { showToast('이름과 나이는 필수야'); return; }
+  saveProfile({
+    name,
+    age,
+    breed: document.getElementById('set-breed').value.trim(),
+    weight: document.getElementById('set-weight').value.trim(),
+  });
+  updateHeader();
+  showToast('저장됐어!');
+}
+
+function showResetConfirm() {
+  document.getElementById('confirmModal').classList.add('open');
+}
+function closeResetConfirm() {
+  document.getElementById('confirmModal').classList.remove('open');
+}
+function resetAll() {
+  const keys = Object.keys(localStorage).filter(k => k.startsWith(PREFIX));
+  keys.forEach(k => localStorage.removeItem(k));
+  closeResetConfirm();
+  location.reload();
+}
+
+function exportData() {
+  const profile = loadProfile();
+  const idx = loadIndex();
+  const records = {};
+  idx.forEach(d => { records[d] = loadRecord(d); });
+  const data = { profile, index: idx, records, exportedAt: new Date().toISOString() };
+  const str = JSON.stringify(data, null, 2);
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(str).then(() => showToast('복사됐어!'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = str;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('복사됐어!');
+  }
+}
+
+// ─────────────────────────────────────────────
+// ONBOARDING
+// ─────────────────────────────────────────────
+function saveOnboarding() {
+  const name = document.getElementById('ob-name').value.trim();
+  const age = document.getElementById('ob-age').value.trim();
+  if (!name) { showToast('강아지 이름을 입력해줘'); return; }
+  if (!age) { showToast('나이를 입력해줘'); return; }
+  saveProfile({
+    name,
+    age,
+    breed: document.getElementById('ob-breed').value.trim(),
+    weight: document.getElementById('ob-weight').value.trim(),
+  });
+  document.getElementById('onboarding').classList.add('hidden');
+  updateHeader();
+  initTodayTab();
+}
+
+// ─────────────────────────────────────────────
+// TAB SWITCH
+// ─────────────────────────────────────────────
+let activeTab = 'today';
+function switchTab(tab) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`screen-${tab}`).classList.add('active');
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  activeTab = tab;
+
+  if (tab === 'history') renderHistory();
+  if (tab === 'report') renderReport();
+  if (tab === 'settings') loadSettingsForm();
+}
+
+// ─────────────────────────────────────────────
+// HEADER
+// ─────────────────────────────────────────────
+function updateHeader() {
+  const profile = loadProfile();
+  const today = getTodayStr();
+  const d = new Date();
+  const days = ['일','월','화','수','목','금','토'];
+  document.getElementById('header-date').textContent =
+    `${d.getMonth()+1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
+  document.getElementById('header-dog-name').textContent =
+    profile ? profile.name : '';
+}
+
+// ─────────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+function init() {
+  updateHeader();
+  const profile = loadProfile();
+  if (!profile) {
+    document.getElementById('onboarding').classList.remove('hidden');
+    return;
+  }
+  document.getElementById('onboarding').classList.add('hidden');
+  initTodayTab();
+}
+
+init();
+</script>
 </body>
 </html>
