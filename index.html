@@ -532,14 +532,13 @@ function cancelAlarm(){
 function fireLocalNotif(){
   try{
     const today=todayStr();
-    if(lRec(today))return; // 이미 체크했으면 패스
+    if(lRec(today))return;
     if(typeof Notification==="undefined"||Notification.permission!=="granted")return;
     const p=lP();const name=p?.name||"반려견";
-    const n=new Notification("MindTail 🐾",{
-      body:`오늘 ${name} 체크 아직 안 했어요! 10초면 돼요 🐾`,
-      icon:"/icon-192.png",tag:"mindtail-daily",renotify:true
-    });
-    n.onclick=()=>{try{window.focus();}catch(e){}n.close();};
+    const opts={body:`오늘 ${name} 체크 아직 안 했어요! 10초면 돼요 🐾`,icon:"/icon-512.png",tag:"mindtail-daily",renotify:true};
+    // Android는 SW 통해서만 알림 가능
+    if(swReg){swReg.showNotification("MindTail 🐾",opts).catch(()=>{try{new Notification("MindTail 🐾",opts);}catch(e){}});}
+    else{try{new Notification("MindTail 🐾",opts);}catch(e){}}
     const alm=lAlarm();if(alm.enabled)scheduleAlarm(alm.time);
   }catch(e){}
 }
@@ -550,12 +549,17 @@ function sendTestNotif(){
       showToast("먼저 알림 권한을 허용해주세요");reqNotifPerm();return;
     }
     const p=lP();const name=p?.name||"반려견";
-    new Notification("MindTail 🐾",{
-      body:`테스트 알림이에요! 오늘 ${name} 체크 해볼까요? 🐾`,
-      icon:"/icon-192.png",tag:"mindtail-test"
-    });
-    showToast("테스트 알림을 보냈어요!");
-  }catch(e){showToast("알림 전송 실패. 권한을 확인해주세요.");}
+    const opts={body:`테스트 알림이에요! 오늘 ${name} 체크 해볼까요? 🐾`,icon:"/icon-512.png",tag:"mindtail-test"};
+    // Android는 SW 통해서만 알림 가능
+    if(swReg){
+      swReg.showNotification("MindTail 🐾",opts)
+        .then(()=>showToast("테스트 알림을 보냈어요! 🔔"))
+        .catch(()=>{try{new Notification("MindTail 🐾",opts);showToast("테스트 알림을 보냈어요! 🔔");}catch(e){showToast("알림 실패 - 앱을 홈화면에서 실행해주세요");}});
+    }else{
+      try{new Notification("MindTail 🐾",opts);showToast("테스트 알림을 보냈어요! 🔔");}
+      catch(e){showToast("알림 실패 - 앱을 홈화면에서 실행해주세요");}
+    }
+  }catch(e){showToast("알림 실패 - 앱을 홈화면에서 실행해주세요");}
 }
 // ─── ONBOARDING ──────────────────────────────────────
 let obG="m",obN="y";
