@@ -423,7 +423,7 @@ function renderSettings(){
           </span>
         </label>
       </div>
-      <div class="srow" style="cursor:default" id="almTimeRow" ${alm.enabled?"":'style="display:none"'}>
+      <div class="srow" id="almTimeRow" style="cursor:default;display:${alm.enabled?'flex':'none'}">
         <div><div class="srow-label">알림 시간</div><div class="srow-sub">매일 이 시간에 알림이 와요</div></div>
         <input type="time" id="almTimeInput" value="${almTime}" onchange="saveAlarmTime(this.value)"
           style="padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-xs);font-family:inherit;font-size:14px;font-weight:700;color:var(--text);background:var(--surface);outline:none">
@@ -444,99 +444,114 @@ function saveEdit(){const name=document.getElementById("ed-name").value.trim();i
 function exportData(){const idx=lIdx();const recs={};idx.forEach(d=>{recs[d]=lRec(d);});const data={profile:lP(),index:idx,records:recs,qhist:lQH(),ahist:lAH(),tracking:lTK(),exportedAt:new Date().toISOString()};const str=JSON.stringify(data,null,2);if(navigator.clipboard){navigator.clipboard.writeText(str).then(()=>showToast("복사됐어요!"));}else{const ta=document.createElement("textarea");ta.value=str;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);showToast("복사됐어요!");}}
 // ─── ALARM ───────────────────────────────────────────
 const K_ALM=`${PFX}:alarm`;
-const lAlarm=()=>sg(K_ALM)||{enabled:false,time:"21:00"};
-const sAlarm=v=>ss(K_ALM,v);
+const lAlarm=()=>{try{return sg(K_ALM)||{enabled:false,time:"21:00"};}catch{return{enabled:false,time:"21:00"};}};
+const sAlarm=v=>{try{ss(K_ALM,v);}catch{}};
 
-// Service Worker 등록
 let swReg=null;
-async function initSW(){
+function initSW(){
+  // [fix] async/await 제거 - 앱 초기화를 절대 블로킹하지 않음
   if(!("serviceWorker" in navigator))return;
   try{
-    swReg=await navigator.serviceWorker.register("/sw.js");
-    console.log("SW registered");
-    // 앱 로드 시 저장된 알람 스케줄 복원
-    const alm=lAlarm();
-    if(alm.enabled&&Notification.permission==="granted")scheduleAlarm(alm.time);
-  }catch(e){console.warn("SW registration failed:",e);}
+    navigator.serviceWorker.register("/sw.js")
+      .then(reg=>{
+        swReg=reg;
+        try{
+          const alm=lAlarm();
+          if(alm.enabled&&typeof Notification!=="undefined"&&Notification.permission==="granted"){
+            scheduleAlarm(alm.time);
+          }
+        }catch(e){}
+      })
+      .catch(e=>console.warn("SW 등록 실패 (무시해도 됨):",e));
+  }catch(e){}
 }
 
-async function reqNotifPerm(){
-  if(!("Notification" in window)){showToast("이 브라우저는 알림을 지원하지 않아요");return;}
-  const perm=await Notification.requestPermission();
-  if(perm==="granted"){showToast("알림이 허용됐어요! ✅");}
-  else if(perm==="denied"){showToast("알림이 차단됐어요. 브라우저 설정에서 허용해주세요.");}
-  renderSettings();
+function reqNotifPerm(){
+  try{
+    if(typeof Notification==="undefined"){showToast("이 브라우저는 알림을 지원하지 않아요");return;}
+    Notification.requestPermission().then(perm=>{
+      if(perm==="granted")showToast("알림이 허용됐어요! ✅");
+      else if(perm==="denied")showToast("알림이 차단됐어요. 브라우저 설정에서 허용해주세요.");
+      renderSettings();
+    });
+  }catch(e){showToast("알림 설정 중 오류가 발생했어요");}
 }
 
 function toggleAlarm(enabled){
-  const alm=lAlarm();alm.enabled=enabled;sAlarm(alm);
-  // 시간 행 표시/숨김
-  const row=document.getElementById("almTimeRow");
-  if(row)row.style.display=enabled?"":"none";
-  if(enabled){
-    if(Notification.permission!=="granted"){
-      reqNotifPerm().then(()=>{
-        if(Notification.permission==="granted")scheduleAlarm(alm.time);
-      });
-    }else{scheduleAlarm(alm.time);}
-    showToast(`${alm.time} 알림이 설정됐어요 🔔`);
-  }else{
-    cancelAlarm();showToast("알림이 꺼졌어요");
-  }
+  try{
+    const alm=lAlarm();alm.enabled=enabled;sAlarm(alm);
+    const row=document.getElementById("almTimeRow");
+    if(row)row.style.display=enabled?"flex":"none";
+    if(enabled){
+      if(typeof Notification==="undefined"||Notification.permission!=="granted"){
+        reqNotifPerm();
+      }else{
+        scheduleAlarm(alm.time);
+      }
+      showToast(`${alm.time} 알림이 설정됐어요 🔔`);
+    }else{
+      cancelAlarm();
+      showToast("알림이 꺼졌어요");
+    }
+  }catch(e){}
 }
 
 function saveAlarmTime(val){
-  const alm=lAlarm();alm.time=val;sAlarm(alm);
-  if(alm.enabled)scheduleAlarm(val);
-  showToast(`${val} 으로 알림 시간이 변경됐어요`);
+  try{
+    const alm=lAlarm();alm.time=val;sAlarm(alm);
+    if(alm.enabled)scheduleAlarm(val);
+    showToast(`${val} 으로 알림 시간이 변경됐어요`);
+  }catch(e){}
 }
 
 function scheduleAlarm(timeStr){
-  if(!swReg)return;
-  const[h,m]=timeStr.split(":").map(Number);
-  // SW에 스케줄 메시지 전송
-  if(swReg.active){
-    swReg.active.postMessage({type:"SCHEDULE_ALARM",hour:h,minute:m});
-  }
-  // Fallback: 앱 열려있을 때 setTimeout으로도 처리
-  if(window._almTimer)clearTimeout(window._almTimer);
-  const now=new Date();const next=new Date();
-  next.setHours(h,m,0,0);
-  if(next<=now)next.setDate(next.getDate()+1);
-  window._almTimer=setTimeout(()=>fireLocalNotif(),next-now);
+  try{
+    if(window._almTimer)clearTimeout(window._almTimer);
+    const[h,m]=timeStr.split(":").map(Number);
+    if(swReg&&swReg.active){
+      try{swReg.active.postMessage({type:"SCHEDULE_ALARM",hour:h,minute:m});}catch(e){}
+    }
+    const now=new Date();const next=new Date();
+    next.setHours(h,m,0,0);
+    if(next<=now)next.setDate(next.getDate()+1);
+    window._almTimer=setTimeout(()=>{try{fireLocalNotif();}catch(e){}},next-now);
+  }catch(e){}
 }
 
 function cancelAlarm(){
-  if(swReg?.active)swReg.active.postMessage({type:"CANCEL_ALARM"});
-  if(window._almTimer)clearTimeout(window._almTimer);
+  try{
+    if(swReg&&swReg.active)swReg.active.postMessage({type:"CANCEL_ALARM"});
+    if(window._almTimer)clearTimeout(window._almTimer);
+  }catch(e){}
 }
 
 function fireLocalNotif(){
-  const p=lP();const name=p?.name||"반려견";
-  const today=todayStr();const rec=lRec(today);
-  // 오늘 이미 체크했으면 알림 안 보냄
-  if(rec)return;
-  if(Notification.permission==="granted"){
+  try{
+    const today=todayStr();
+    if(lRec(today))return; // 이미 체크했으면 패스
+    if(typeof Notification==="undefined"||Notification.permission!=="granted")return;
+    const p=lP();const name=p?.name||"반려견";
     const n=new Notification("MindTail 🐾",{
       body:`오늘 ${name} 체크 아직 안 했어요! 10초면 돼요 🐾`,
       icon:"/icon-192.png",tag:"mindtail-daily",renotify:true
     });
-    n.onclick=()=>{window.focus();n.close();};
-  }
-  // 다음날 재스케줄
-  const alm=lAlarm();if(alm.enabled)scheduleAlarm(alm.time);
+    n.onclick=()=>{try{window.focus();}catch(e){}n.close();};
+    const alm=lAlarm();if(alm.enabled)scheduleAlarm(alm.time);
+  }catch(e){}
 }
 
 function sendTestNotif(){
-  if(Notification.permission!=="granted"){
-    showToast("먼저 알림 권한을 허용해주세요");reqNotifPerm();return;
-  }
-  const p=lP();const name=p?.name||"반려견";
-  new Notification("MindTail 🐾",{
-    body:`테스트 알림이에요! 오늘 ${name} 체크 해볼까요? 🐾`,
-    icon:"/icon-192.png",tag:"mindtail-test"
-  });
-  showToast("테스트 알림을 보냈어요!");
+  try{
+    if(typeof Notification==="undefined"||Notification.permission!=="granted"){
+      showToast("먼저 알림 권한을 허용해주세요");reqNotifPerm();return;
+    }
+    const p=lP();const name=p?.name||"반려견";
+    new Notification("MindTail 🐾",{
+      body:`테스트 알림이에요! 오늘 ${name} 체크 해볼까요? 🐾`,
+      icon:"/icon-192.png",tag:"mindtail-test"
+    });
+    showToast("테스트 알림을 보냈어요!");
+  }catch(e){showToast("알림 전송 실패. 권한을 확인해주세요.");}
 }
 function selG(v){obG=v;document.getElementById("ob-gm").classList.toggle("on",v==="m");document.getElementById("ob-gf").classList.toggle("on",v==="f");}
 function selN(v){obN=v;document.getElementById("ob-ny").classList.toggle("on",v==="y");document.getElementById("ob-nn").classList.toggle("on",v==="n");}
