@@ -4,28 +4,34 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>MindTail</title>
-<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet"></noscript>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#c8793f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="MindTail">
 <style>
-:root{--bg:#f7f3ee;--bg2:#ede6db;--surface:#fff;--surface2:#faf7f3;--primary:#c8793f;--primary-light:#e09a62;--primary-pale:#fdeedd;--primary-dark:#a85e28;--green:#4a9e6f;--green-pale:#e6f4ed;--green-dark:#357a54;--amber:#d4861a;--amber-pale:#fef3e2;--red:#c0392b;--red-pale:#fdecea;--text:#1e1610;--text-sub:#6b5744;--text-muted:#a8917c;--border:#e4dbd0;--border-light:#ede8e1;--shadow-sm:0 1px 8px rgba(30,22,16,.06);--shadow:0 2px 16px rgba(30,22,16,.09);--radius:20px;--radius-sm:12px;--radius-xs:8px;}
+:root{--bg:#f7f3ee;--bg2:#ede6db;--surface:#fff;--surface2:#faf7f3;--primary:#c8793f;--primary-light:#e09a62;--primary-pale:#fdeedd;--primary-dark:#a85e28;--green:#4a9e6f;--green-pale:#e6f4ed;--green-dark:#357a54;--amber:#d4861a;--amber-pale:#fef3e2;--red:#c0392b;--red-pale:#fdecea;--text:#1e1610;--text-sub:#6b5744;--text-muted:#a8917c;--border:#e4dbd0;--border-light:#ede8e1;--shadow-sm:0 1px 8px rgba(30,22,16,.06);--shadow:0 2px 16px rgba(30,22,16,.09);--radius:20px;--radius-sm:12px;--radius-xs:8px;--tab-h:64px;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;background:#ccc3b8;font-family:-apple-system,sans-serif;color:var(--text);overflow:hidden;}
-#app{max-width:430px;margin:0 auto;height:100dvh;height:100vh;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden;box-shadow:0 0 60px rgba(0,0,0,.22);}
+/* [fix] Android Chrome 주소창 때문에 dvh 제거, fill-available 사용 */
+html{height:100%;height:-webkit-fill-available;}
+body{height:100%;height:-webkit-fill-available;background:#ccc3b8;font-family:-apple-system,sans-serif;color:var(--text);overflow:hidden;}
+/* [fix] 앱 높이 고정 - 탭바 잘림 방지 */
+#app{max-width:430px;margin:0 auto;height:100%;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden;box-shadow:0 0 60px rgba(0,0,0,.22);}
 .header{height:56px;background:var(--surface);border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;z-index:20;}
 .header-logo{font-family:'Nanum Myeongjo',serif;font-size:22px;font-weight:800;color:var(--primary);}
 .hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:1px;}
 .hdr-name{font-size:13px;font-weight:700;}
 .hdr-date{font-size:11px;color:var(--text-muted);}
-.tab-bar{height:64px;background:var(--surface);border-top:1px solid var(--border-light);display:flex;flex-shrink:0;z-index:20;padding-bottom:env(safe-area-inset-bottom,0);}
-.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--text-muted);padding:8px 0;font-family:inherit;}
+/* [fix] 탭바 fixed → flex 구조 안에서 항상 하단 고정 */
+.tab-bar{height:var(--tab-h);min-height:var(--tab-h);background:var(--surface);border-top:1px solid var(--border-light);display:flex;flex-shrink:0;z-index:20;padding-bottom:env(safe-area-inset-bottom,0);}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--text-muted);padding:8px 0;font-family:inherit;-webkit-tap-highlight-color:transparent;}
 .tab-btn.active{color:var(--primary);}
 .tab-btn svg{width:22px;height:22px;stroke-width:1.8;}
 .tab-label{font-size:10px;font-weight:700;}
-.content{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+.content{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
 .screen{display:none;flex-direction:column;height:100%;overflow:hidden;}
 .screen.active{display:flex;}
 .scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
@@ -373,7 +379,7 @@ async function askQ(){if(CS.idx>=CS.qs.length){finishChat();return;}await botMsg
 function showAns(q){document.getElementById("chatAnsArea").style.display="block";document.getElementById("ansBtns").innerHTML="";OPTS.forEach(opt=>{const b=document.createElement("button");b.className="ans-btn";b.innerHTML=`<span>${opt.label}</span><span class="ascore s${opt.score}">${SL[opt.score]}</span>`;b.onclick=()=>handleAns(q,opt);document.getElementById("ansBtns").appendChild(b);});}
 async function handleAns(q,opt){document.getElementById("chatAnsArea").style.display="none";CS.hist.push({r:"user",t:opt.label});addBub("user",opt.label);CS.answers.push({cat:q.cat,tag:q.tag,q:q.q,answer:opt.label,score:opt.score});CS.idx++;updateProg();saveDraft();if(CS.idx>=CS.qs.length){await new Promise(r=>setTimeout(r,400));finishChat();}else await askQ();}
 function finishChat(){const today=CS.date;const ah=lAH();ah.push({date:today,answers:CS.answers});if(ah.length>60)ah.splice(0,ah.length-60);ss(K.AH,ah);const qh=lQH();qh.push({date:today,qs:CS.qs.map(q=>({id:q.id,cat:q.cat,tag:q.tag}))});if(qh.length>30)qh.splice(0,qh.length-30);ss(K.QH,qh);updateTracking(CS.answers,today);// [fix] sessionCount 여기서만 증가 (updateStreak에서 중복 증가 제거)
-const meta=lMeta();meta.sessionCount=(meta.sessionCount||0)+1;sMeta(meta);updateStreak(today);const ms=calcMS(today);const rec={date:today,answers:CS.answers,ms,status:recSt({answers:CS.answers})};sRec(today,rec);dDraft(today);CS.done=true;showDone(rec,false);}
+const meta=lMeta();meta.sessionCount=(meta.sessionCount||0)+1;sMeta(meta);updateStreak(today);const ms=calcMS(today);const rec={date:today,answers:CS.answers,ms,status:recSt({answers:CS.answers})};sRec(today,rec);dDraft(today);CS.done=true;invalidateCache();showDone(rec,false);}
 function showDone(rec,already){document.getElementById("chatWrap").style.display="none";const cd=document.getElementById("chatDone");cd.style.display="flex";cd.style.flexDirection="column";const msgs=document.getElementById("doneMsgs");msgs.innerHTML="";if(!already&&CS.hist.length>0){CS.hist.forEach(m=>{const r=document.createElement("div");r.className=`brow ${m.r}`;r.innerHTML=m.r==="bot"?`<div class="bavatar">🐾</div><div class="bubble bot">${m.t}</div>`:`<div class="bubble user">${m.t}</div>`;msgs.appendChild(r);});}else{const r=document.createElement("div");r.className="brow bot";r.innerHTML=`<div class="bavatar">🐾</div><div class="bubble bot">오늘 기록은 이미 완료됐어! 내일 또 봐 🐾</div>`;msgs.appendChild(r);}const card=document.getElementById("doneCard");const mx=rec.answers.reduce((m,a)=>Math.max(m,a.score),0);const meta=lMeta();const streak=meta.streak||1;const ms=rec.ms;const compMsg=mx===0?"최근 인지 행동은 비교적 안정적으로 관찰돼.":mx===1?"일부 항목에서 경미한 변화가 관찰됐어. 지속되면 기록을 참고해봐.":"몇 가지 행동 변화가 관찰됐어. 기록을 계속 확인해보자.";card.innerHTML=`<div style="text-align:center;padding:4px 0 16px"><div style="font-size:24px;margin-bottom:8px">✅</div><div style="font-size:15px;font-weight:800;margin-bottom:4px">체크 완료!</div><div style="font-size:13px;color:var(--green-dark);font-weight:600">${lP()?.name||""}와 보낸 소중한 시간이 차곡차곡 쌓이고 있어요 🐾</div></div><div style="background:var(--green-pale);border-radius:var(--radius-sm);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div><div style="font-size:11px;font-weight:700;color:var(--green-dark);margin-bottom:2px">🔥 연속 체크</div><div style="font-family:'Nanum Myeongjo',serif;font-size:22px;font-weight:800;color:var(--green-dark)">${streak}일째</div></div>${ms&&ms.tot>=8?`<div style="text-align:right"><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Mind Score</div><div style="font-family:'Nanum Myeongjo',serif;font-size:28px;font-weight:800;color:var(--primary)">${ms.score}</div><div style="font-size:11px;color:var(--text-muted)">${sifo(ms.score).label}</div></div>`:`<div style="font-size:12px;color:var(--text-muted);text-align:right">기록이 쌓이면<br>Mind Score가<br>표시돼요</div>`}</div><div style="font-size:13px;color:var(--text-sub);line-height:1.7;padding:12px 14px;background:var(--surface2);border-radius:var(--radius-xs);border-left:3px solid var(--primary-light)">${compMsg}<br><span style="font-size:12px;color:var(--text-muted)">변화가 계속되면 병원 상담 때 이 기록을 참고해주세요.</span></div>${already?"":` <button class="redo-btn" onclick="redoToday()">오늘 기록 다시 하기</button>`}`;setTimeout(()=>{document.querySelector(".done-wrap").scrollTop=9999;},100);}
 function redoToday(){const today=todayStr();sd(K.rec(today));const idx=lIdx().filter(d=>d!==today);ss(K.IDX,idx);dDraft(today);const ah=lAH().filter(s=>s.date!==today);ss(K.AH,ah);const qh=lQH().filter(s=>s.date!==today);ss(K.QH,qh);startChat(true);}
 function renderHome(){const p=lP();if(!p)return;const today=todayStr();const rec=lRec(today);const meta=lMeta();const draft=lDraft(today);const age=calcAge(p.birth);const daysT=p.registeredAt?diffDays(p.registeredAt.slice(0,10),today)+1:1;const tipIdx=Math.floor(Date.now()/86400000)%TIPS.length;const ms=calcMS(today);const isDone=!!rec;let chkHTML="";if(isDone){const streak=meta.streak||1;chkHTML=`<div class="check-card done"><div class="check-label">Daily Check</div><div style="font-size:14px;font-weight:700;color:var(--green-dark);margin-bottom:4px">오늘 체크 완료! ✓</div><div style="font-family:'Nanum Myeongjo',serif;font-size:22px;font-weight:800;color:var(--green-dark);margin-bottom:4px">🔥 ${streak}일째 연속 체크 중이에요!</div><div style="font-size:12px;color:var(--green);font-weight:600;margin-bottom:14px">${p.name}와 보낸 소중한 시간이 차곡차곡 쌓이고 있어요 🐾</div><div class="check-done-badge">✓ 완료</div></div>`;}else{chkHTML=`<div class="check-card pending"><div class="check-label">Daily Check</div><div class="check-title">${p.name}의 오늘은 어때요?</div><div class="check-sub">오늘의 인지 행동 체크<br>(10초면 충분해요!)</div><button class="check-start-btn" onclick="goChat()">🐾 ${draft?"이어서 하기":"안부 묻기 시작"}</button></div>`;}const msHTML=ms&&ms.tot>=8?`<div class="sec-label" style="margin-top:2px">Mind Score</div><div class="card" style="padding:16px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">최근 14일 기준</div><div style="font-size:14px;font-weight:700;color:var(--text-sub)">${sifo(ms.score).label}</div></div><div style="font-family:'Nanum Myeongjo',serif;font-size:36px;font-weight:800;color:var(--primary)">${ms.score}</div></div>`:"";document.getElementById("homeContent").innerHTML=`<div class="card" style="padding:16px 18px;display:flex;align-items:center;gap:14px;margin-bottom:14px"><div class="pet-avatar">🐶</div><div><div style="font-size:15px;font-weight:800;margin-bottom:2px">${p.name}의 오늘</div><div style="font-size:12px;color:var(--text-muted)">${age?`${age}세`:""}${p.breed?` · ${p.breed}`:""}</div><div style="font-size:12px;color:var(--primary);font-weight:700;margin-top:2px">함께한 지 ${daysT}일째</div></div></div>${chkHTML}${msHTML}<div class="sec-label">보호자 팁</div><div class="card" style="padding:18px 20px"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><div style="font-size:13px;font-weight:800;color:var(--text-sub)">오늘의 보호자 팁</div><span>🐾</span></div><div style="font-size:13px;color:var(--text-sub);line-height:1.7">${TIPS[tipIdx]}</div></div>`;}
@@ -538,7 +544,24 @@ function saveOB(){const name=document.getElementById("ob-name").value.trim();con
 document.getElementById("ob-birth").addEventListener("input",fmtBirth);
 document.getElementById("ed-birth").addEventListener("input",fmtBirth);
 function updateHdr(){const p=lP();const d=new Date();const dw=["일","월","화","수","목","금","토"];document.getElementById("hdrDate").textContent=`${d.getMonth()+1}월 ${d.getDate()}일 (${dw[d.getDay()]})`;document.getElementById("hdrName").textContent=p?p.name:"—";}
-function switchTab(tab){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));const sid=tab==="chat"?"screen-chat":`screen-${tab}`;document.getElementById(sid)?.classList.add("active");const tid=tab==="chat"?"tab-home":`tab-${tab}`;document.getElementById(tid)?.classList.add("active");if(tab==="home")renderHome();if(tab==="history")renderHistory();if(tab==="report")renderReport();if(tab==="settings")renderSettings();if(tab==="chat")document.getElementById("tab-home").classList.remove("active");}
+// [fix] 탭 전환 성능 개선 - 한 번 렌더링된 탭은 캐시, 홈/히스토리는 데이터 변경 가능하니 항상 갱신
+const _rendered={};
+function switchTab(tab){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+  const sid=tab==="chat"?"screen-chat":`screen-${tab}`;
+  document.getElementById(sid)?.classList.add("active");
+  const tid=tab==="chat"?"tab-home":`tab-${tab}`;
+  document.getElementById(tid)?.classList.add("active");
+  if(tab==="chat"){document.getElementById("tab-home").classList.remove("active");return;}
+  // 홈은 체크 상태가 바뀌니 항상 갱신, 나머지는 첫 방문 때만 렌더
+  if(tab==="home"){renderHome();return;}
+  if(tab==="history"){renderHistory();return;}
+  if(tab==="report"&&!_rendered.report){renderReport();_rendered.report=true;return;}
+  if(tab==="settings"&&!_rendered.settings){renderSettings();_rendered.settings=true;return;}
+}
+// 설정/리포트 탭은 데이터 변경 시 캐시 무효화
+function invalidateCache(){_rendered.report=false;_rendered.settings=false;}
 function init(){updateHdr();initSW();const p=lP();if(!p){document.getElementById("onboarding").classList.remove("hidden");return;}document.getElementById("onboarding").classList.add("hidden");renderHome();}
 init();
 </script>
