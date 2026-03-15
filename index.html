@@ -540,7 +540,7 @@ function sendTestNotif(){
 }
 function selG(v){obG=v;document.getElementById("ob-gm").classList.toggle("on",v==="m");document.getElementById("ob-gf").classList.toggle("on",v==="f");}
 function selN(v){obN=v;document.getElementById("ob-ny").classList.toggle("on",v==="y");document.getElementById("ob-nn").classList.toggle("on",v==="n");}
-function saveOB(){const name=document.getElementById("ob-name").value.trim();const birth=document.getElementById("ob-birth").value.trim();if(!name){showToast("강아지 이름을 입력해주세요");return;}if(!birth){showToast("생년월일을 입력해주세요");return;}sP({name,birth,breed:document.getElementById("ob-breed").value.trim(),weight:document.getElementById("ob-weight").value.trim(),gender:obG,neuter:obN,registeredAt:new Date().toISOString(),species:"dog",userId:"local_user"});document.getElementById("onboarding").classList.add("hidden");updateHdr();renderHome();}
+function saveOB(){const name=document.getElementById("ob-name").value.trim();const birth=document.getElementById("ob-birth").value.trim();if(!name){showToast("강아지 이름을 입력해주세요");return;}if(!birth){showToast("생년월일을 입력해주세요");return;}sP({name,birth,breed:document.getElementById("ob-breed").value.trim(),weight:document.getElementById("ob-weight").value.trim(),gender:obG,neuter:obN,registeredAt:new Date().toISOString(),species:"dog",userId:"local_user"});document.getElementById("onboarding").classList.add("hidden");invalidateCache();updateHdr();renderHome();}
 document.getElementById("ob-birth").addEventListener("input",fmtBirth);
 document.getElementById("ed-birth").addEventListener("input",fmtBirth);
 function updateHdr(){const p=lP();const d=new Date();const dw=["일","월","화","수","목","금","토"];document.getElementById("hdrDate").textContent=`${d.getMonth()+1}월 ${d.getDate()}일 (${dw[d.getDay()]})`;document.getElementById("hdrName").textContent=p?p.name:"—";}
@@ -562,7 +562,15 @@ function switchTab(tab){
 }
 // 설정/리포트 탭은 데이터 변경 시 캐시 무효화
 function invalidateCache(){_rendered.report=false;_rendered.settings=false;}
-function init(){updateHdr();initSW();const p=lP();if(!p){document.getElementById("onboarding").classList.remove("hidden");return;}document.getElementById("onboarding").classList.add("hidden");renderHome();}
+function init(){
+  updateHdr();
+  // [fix] SW 등록을 앱 초기화와 완전히 분리 - 에러나도 앱은 정상 동작
+  setTimeout(()=>initSW(), 0);
+  const p=lP();
+  if(!p){document.getElementById("onboarding").classList.remove("hidden");return;}
+  document.getElementById("onboarding").classList.add("hidden");
+  renderHome();
+}
 init();
 </script>
 </body>
