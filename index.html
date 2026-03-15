@@ -553,6 +553,8 @@ function sendTestNotif(){
     showToast("테스트 알림을 보냈어요!");
   }catch(e){showToast("알림 전송 실패. 권한을 확인해주세요.");}
 }
+// ─── ONBOARDING ──────────────────────────────────────
+let obG="m",obN="y";
 function selG(v){obG=v;document.getElementById("ob-gm").classList.toggle("on",v==="m");document.getElementById("ob-gf").classList.toggle("on",v==="f");}
 function selN(v){obN=v;document.getElementById("ob-ny").classList.toggle("on",v==="y");document.getElementById("ob-nn").classList.toggle("on",v==="n");}
 function saveOB(){const name=document.getElementById("ob-name").value.trim();const birth=document.getElementById("ob-birth").value.trim();if(!name){showToast("강아지 이름을 입력해주세요");return;}if(!birth){showToast("생년월일을 입력해주세요");return;}sP({name,birth,breed:document.getElementById("ob-breed").value.trim(),weight:document.getElementById("ob-weight").value.trim(),gender:obG,neuter:obN,registeredAt:new Date().toISOString(),species:"dog",userId:"local_user"});document.getElementById("onboarding").classList.add("hidden");invalidateCache();updateHdr();renderHome();}
