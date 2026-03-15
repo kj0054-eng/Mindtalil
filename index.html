@@ -402,40 +402,63 @@ function renderSettings(){
   const p=lP();if(!p)return;
   const age=calcAge(p.birth);const gi=p.gender==="f"?"♀":"♂";const nt=p.neuter==="y"?"중성화 O":"중성화 X";
   const alm=lAlarm();
-  const almStatus=alm.enabled?"on":"off";
   const almTime=alm.time||"21:00";
   const notifPerm=("Notification" in window)?Notification.permission:"unsupported";
-  const permBadge=notifPerm==="granted"?`<span style="background:var(--green-pale);color:var(--green-dark);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:800">허용됨</span>`:notifPerm==="denied"?`<span style="background:var(--red-pale);color:var(--red);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:800">차단됨</span>`:`<span style="background:var(--amber-pale);color:var(--amber);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:800">미설정</span>`;
+  // 권한 상태별 UI
+  let permUI="";
+  if(notifPerm==="granted"){
+    permUI=`<div style="display:flex;align-items:center;gap:6px"><span style="background:#e6f4ed;color:#357a54;padding:4px 12px;border-radius:100px;font-size:11px;font-weight:800">✓ 허용됨</span></div>`;
+  }else if(notifPerm==="denied"){
+    permUI=`<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+      <span style="background:#fdecea;color:#c0392b;padding:4px 12px;border-radius:100px;font-size:11px;font-weight:800">✗ 차단됨</span>
+      <div style="font-size:11px;color:var(--text-muted);text-align:right">브라우저 주소창 왼쪽<br>🔒 아이콘 → 알림 허용</div>
+    </div>`;
+  }else{
+    permUI=`<button onclick="reqNotifPerm()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:100px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer">허용하기</button>`;
+  }
+  // 토글 HTML - CSS 클래스로 상태 관리
+  const togOn=alm.enabled;
+  const togHTML=`
+    <div id="almToggleWrap" onclick="toggleAlarm(!${togOn})" style="width:48px;height:26px;border-radius:13px;background:${togOn?"#c8793f":"#e4dbd0"};position:relative;cursor:pointer;transition:background .25s;flex-shrink:0">
+      <div style="position:absolute;width:20px;height:20px;background:#fff;border-radius:50%;top:3px;left:${togOn?"25px":"3px"};transition:left .25s;box-shadow:0 1px 4px rgba(0,0,0,.2)"></div>
+    </div>`;
   document.getElementById("settingsContent").innerHTML=`
     <div class="sprof"><div class="savatar">🐶</div><div><div style="font-size:16px;font-weight:800;margin-bottom:2px">${p.name} ${gi}</div><div style="font-size:12px;color:var(--text-muted)">${age?`${age}세 `:""}${p.breed||""} ${nt}</div></div><button class="sedit-btn" onclick="openEdit()">수정</button></div>
     <div class="ssec">
       <div class="ssec-title">데일리 알림</div>
       <div class="srow" style="cursor:default">
-        <div><div class="srow-label">알림 권한</div><div class="srow-sub">브라우저 알림 허용이 필요해요</div></div>
-        <div style="display:flex;align-items:center;gap:8px">${permBadge}${notifPerm!=="granted"?`<button onclick="reqNotifPerm()" style="padding:6px 12px;background:var(--primary);color:#fff;border:none;border-radius:100px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">허용하기</button>`:""}</div>
+        <div><div class="srow-label">알림 권한</div><div class="srow-sub">${notifPerm==="denied"?"차단됨 - 브라우저에서 직접 허용 필요":notifPerm==="granted"?"알림이 허용된 상태예요":"알림 허용이 필요해요"}</div></div>
+        ${permUI}
       </div>
       <div class="srow" style="cursor:default">
-        <div><div class="srow-label">데일리 알림</div><div class="srow-sub">매일 체크 시간에 알려줄게요</div></div>
-        <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
-          <input type="checkbox" id="almToggle" ${alm.enabled?"checked":""} onchange="toggleAlarm(this.checked)" style="opacity:0;width:0;height:0">
-          <span style="position:absolute;inset:0;background:${alm.enabled?"var(--primary)":"var(--border)"};border-radius:12px;transition:.3s;cursor:pointer">
-            <span style="position:absolute;height:18px;width:18px;left:${alm.enabled?"23px":"3px"};bottom:3px;background:#fff;border-radius:50%;transition:.3s"></span>
-          </span>
-        </label>
+        <div><div class="srow-label">데일리 알림</div><div class="srow-sub">${togOn?"켜짐 · "+almTime+" 알림":"꺼짐"}</div></div>
+        ${togHTML}
       </div>
-      <div class="srow" id="almTimeRow" style="cursor:default;display:${alm.enabled?'flex':'none'}">
+      <div class="srow" id="almTimeRow" style="cursor:default;display:${togOn?"flex":"none"}">
         <div><div class="srow-label">알림 시간</div><div class="srow-sub">매일 이 시간에 알림이 와요</div></div>
         <input type="time" id="almTimeInput" value="${almTime}" onchange="saveAlarmTime(this.value)"
-          style="padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-xs);font-family:inherit;font-size:14px;font-weight:700;color:var(--text);background:var(--surface);outline:none">
+          style="padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-xs);font-family:inherit;font-size:14px;font-weight:700;color:var(--text);background:var(--surface);outline:none;-webkit-appearance:none">
       </div>
       <div class="srow" style="cursor:default">
-        <div><div class="srow-label">테스트 알림</div><div class="srow-sub">알림이 제대로 오는지 확인해봐요</div></div>
-        <button onclick="sendTestNotif()" style="padding:6px 14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:100px;font-family:inherit;font-size:12px;font-weight:700;color:var(--text-sub);cursor:pointer">테스트</button>
+        <div><div class="srow-label">테스트 알림</div><div class="srow-sub">지금 바로 알림 테스트</div></div>
+        <button onclick="sendTestNotif()" style="padding:8px 16px;background:var(--surface2);border:1.5px solid var(--border);border-radius:100px;font-family:inherit;font-size:12px;font-weight:700;color:var(--text-sub);cursor:pointer">테스트</button>
       </div>
     </div>
     <div class="ssec"><div class="ssec-title">데이터</div><div class="srow" onclick="exportData()"><div><div class="srow-label">데이터 JSON 복사</div><div class="srow-sub">기록 전체를 클립보드에 복사해요</div></div><div style="color:var(--text-muted)">→</div></div><div class="srow" onclick="document.getElementById('confirmModal').classList.add('open')"><div><div class="srow-label danger">전체 데이터 초기화</div><div class="srow-sub">모든 기록과 프로필이 삭제돼요</div></div><div class="danger-badge">초기화</div></div></div>
     <div class="ssec"><div class="ssec-title">정보</div><div class="srow"><div class="srow-label">MindTail v2.1</div></div><div class="srow"><div><div class="srow-label">이 앱은 의료 진단 도구가 아니에요</div><div class="srow-sub">반려견 행동 변화 기록 참고용이에요</div></div></div></div>
   `;
+}
+// [fix] toggleAlarm이 renderSettings를 다시 호출해서 토글 상태 반영
+function toggleAlarm(enabled){
+  try{
+    if(enabled&&typeof Notification!=="undefined"&&Notification.permission!=="granted"){
+      reqNotifPerm();return; // 권한 없으면 토글 못 킴
+    }
+    const alm=lAlarm();alm.enabled=enabled;sAlarm(alm);
+    if(enabled){scheduleAlarm(alm.time);showToast(`${alm.time} 알림이 설정됐어요 🔔`);}
+    else{cancelAlarm();showToast("알림이 꺼졌어요");}
+    renderSettings(); // UI 전체 갱신 → 토글 색상/위치 정확히 반영
+  }catch(e){}
 }
 function openEdit(){const p=lP();if(!p)return;document.getElementById("ed-name").value=p.name||"";document.getElementById("ed-birth").value=p.birth||"";document.getElementById("ed-breed").value=p.breed||"";document.getElementById("ed-weight").value=p.weight||"";eG=p.gender||"m";eN=p.neuter||"y";document.getElementById("ed-gm").classList.toggle("on",eG==="m");document.getElementById("ed-gf").classList.toggle("on",eG==="f");document.getElementById("ed-ny").classList.toggle("on",eN==="y");document.getElementById("ed-nn").classList.toggle("on",eN==="n");document.getElementById("profileModal").classList.add("open");}
 function eSelG(v){eG=v;document.getElementById("ed-gm").classList.toggle("on",v==="m");document.getElementById("ed-gf").classList.toggle("on",v==="f");}
@@ -475,25 +498,6 @@ function reqNotifPerm(){
       renderSettings();
     });
   }catch(e){showToast("알림 설정 중 오류가 발생했어요");}
-}
-
-function toggleAlarm(enabled){
-  try{
-    const alm=lAlarm();alm.enabled=enabled;sAlarm(alm);
-    const row=document.getElementById("almTimeRow");
-    if(row)row.style.display=enabled?"flex":"none";
-    if(enabled){
-      if(typeof Notification==="undefined"||Notification.permission!=="granted"){
-        reqNotifPerm();
-      }else{
-        scheduleAlarm(alm.time);
-      }
-      showToast(`${alm.time} 알림이 설정됐어요 🔔`);
-    }else{
-      cancelAlarm();
-      showToast("알림이 꺼졌어요");
-    }
-  }catch(e){}
 }
 
 function saveAlarmTime(val){
