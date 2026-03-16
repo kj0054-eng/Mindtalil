@@ -394,8 +394,12 @@ const isFirst=CS.idx===0;const isNewCat=cat!==_lastCat;const prevAns=CS.answers.
 function showAns(q){document.getElementById("chatAnsArea").style.display="block";document.getElementById("ansBtns").innerHTML="";OPTS.forEach(opt=>{const b=document.createElement("button");b.className="ans-btn";b.innerHTML=`<span>${opt.label}</span><span class="ascore s${opt.score}">${SL[opt.score]}</span>`;b.onclick=()=>handleAns(q,opt);document.getElementById("ansBtns").appendChild(b);});}
 async function handleAns(q,opt){document.getElementById("chatAnsArea").style.display="none";document.getElementById("chatExplain").style.display="none";CS.hist.push({r:"user",t:opt.label});addBub("user",opt.label);CS.answers.push({cat:q.cat,tag:q.tag,q:q.q,answer:opt.label,score:opt.score});CS.idx++;updateProg();saveDraft();// 즉시 피드백 (4번): 1~2줄 간단 피드백
 const fb=CAT_FEEDBACK[q.cat]?.[opt.score];if(fb){await botMsg(fb,500);}if(CS.idx>=CS.qs.length){await new Promise(r=>setTimeout(r,300));finishChat();}else await askQ();}
-function finishChat(){const today=CS.date;const ah=lAH();ah.push({date:today,answers:CS.answers});if(ah.length>60)ah.splice(0,ah.length-60);ss(K.AH,ah);const qh=lQH();qh.push({date:today,qs:CS.qs.map(q=>({id:q.id,cat:q.cat,tag:q.tag}))});if(qh.length>30)qh.splice(0,qh.length-30);ss(K.QH,qh);updateTracking(CS.answers,today);// [fix] sessionCount 여기서만 증가 (updateStreak에서 중복 증가 제거)
-const meta=lMeta();meta.sessionCount=(meta.sessionCount||0)+1;sMeta(meta);updateStreak(today);const ms=calcMS(today);const rec={date:today,answers:CS.answers,ms,status:recSt({answers:CS.answers})};sRec(today,rec);dDraft(today);CS.done=true;invalidateCache();showDone(rec,false);}
+function finishChat(){const today=CS.date;const ah=lAH();ah.push({date:today,answers:CS.answers});if(ah.length>60)ah.splice(0,ah.length-60);ss(K.AH,ah);const qh=lQH();qh.push({date:today,qs:CS.qs.map(q=>({id:q.id,cat:q.cat,tag:q.tag}))});if(qh.length>30)qh.splice(0,qh.length-30);ss(K.QH,qh);updateTracking(CS.answers,today);const meta=lMeta();meta.sessionCount=(meta.sessionCount||0)+1;sMeta(meta);updateStreak(today);const ms=calcMS(today);const rec={date:today,answers:CS.answers,ms,status:recSt({answers:CS.answers})};sRec(today,rec);dDraft(today);CS.done=true;invalidateCache();
+  // 체크 완료 → SW에 알려서 리마인드 취소
+  try{if(swReg&&swReg.active)swReg.active.postMessage({type:"CHECKED_TODAY"});}catch(e){}
+  // 앱 fallback 리마인드 타이머도 취소
+  if(window._remindTimer){clearTimeout(window._remindTimer);window._remindTimer=null;}
+  showDone(rec,false);}
 function showDone(rec,already){document.getElementById("chatWrap").style.display="none";const cd=document.getElementById("chatDone");cd.style.display="flex";cd.style.flexDirection="column";const msgs=document.getElementById("doneMsgs");msgs.innerHTML="";if(!already&&CS.hist.length>0){CS.hist.forEach(m=>{const r=document.createElement("div");r.className=`brow ${m.r}`;r.innerHTML=m.r==="bot"?`<div class="bavatar">🐾</div><div class="bubble bot">${m.t}</div>`:`<div class="bubble user">${m.t}</div>`;msgs.appendChild(r);});}else{const r=document.createElement("div");r.className="brow bot";r.innerHTML=`<div class="bavatar">🐾</div><div class="bubble bot">오늘 기록은 이미 완료됐어! 내일 또 봐 🐾</div>`;msgs.appendChild(r);}const card=document.getElementById("doneCard");const mx=rec.answers.reduce((m,a)=>Math.max(m,a.score),0);const meta=lMeta();const streak=meta.streak||1;const ms=rec.ms;const compMsg=mx===0?"최근 인지 행동은 비교적 안정적으로 관찰돼.":mx===1?"일부 항목에서 경미한 변화가 관찰됐어. 지속되면 기록을 참고해봐.":"몇 가지 행동 변화가 관찰됐어. 기록을 계속 확인해보자.";card.innerHTML=`<div style="text-align:center;padding:4px 0 16px"><div style="font-size:24px;margin-bottom:8px">✅</div><div style="font-size:15px;font-weight:800;margin-bottom:4px">체크 완료!</div><div style="font-size:13px;color:var(--green-dark);font-weight:600">${lP()?.name||""}와 보낸 소중한 시간이 차곡차곡 쌓이고 있어요 🐾</div></div><div style="background:var(--green-pale);border-radius:var(--radius-sm);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div><div style="font-size:11px;font-weight:700;color:var(--green-dark);margin-bottom:2px">🔥 연속 체크</div><div style="font-family:'Nanum Myeongjo',serif;font-size:22px;font-weight:800;color:var(--green-dark)">${streak}일째</div></div>${ms&&ms.tot>=8?`<div style="text-align:right"><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Mind Score</div><div style="font-family:'Nanum Myeongjo',serif;font-size:28px;font-weight:800;color:var(--primary)">${ms.score}</div><div style="font-size:11px;color:var(--text-muted)">${sifo(ms.score).label}</div></div>`:`<div style="font-size:12px;color:var(--text-muted);text-align:right">기록이 쌓이면<br>Mind Score가<br>표시돼요</div>`}</div><div style="font-size:13px;color:var(--text-sub);line-height:1.7;padding:12px 14px;background:var(--surface2);border-radius:var(--radius-xs);border-left:3px solid var(--primary-light)">${compMsg}<br><span style="font-size:12px;color:var(--text-muted)">변화가 계속되면 병원 상담 때 이 기록을 참고해주세요.</span></div>${already?"":` <button class="redo-btn" onclick="redoToday()">오늘 기록 다시 하기</button>`}`;setTimeout(()=>{document.querySelector(".done-wrap").scrollTop=9999;},100);}
 function redoToday(){const today=todayStr();sd(K.rec(today));const idx=lIdx().filter(d=>d!==today);ss(K.IDX,idx);dDraft(today);const ah=lAH().filter(s=>s.date!==today);ss(K.AH,ah);const qh=lQH().filter(s=>s.date!==today);ss(K.QH,qh);startChat(true);}
 function calcRecentChanges(today){// 최근 7일 카테고리별 변화 분석
@@ -506,7 +510,7 @@ function renderSettings(){
       </div>
     </div>
     <div class="ssec"><div class="ssec-title">데이터</div><div class="srow" onclick="exportData()"><div><div class="srow-label">데이터 JSON 복사</div><div class="srow-sub">기록 전체를 클립보드에 복사해요</div></div><div style="color:var(--text-muted)">→</div></div><div class="srow" onclick="document.getElementById('confirmModal').classList.add('open')"><div><div class="srow-label danger">전체 데이터 초기화</div><div class="srow-sub">모든 기록과 프로필이 삭제돼요</div></div><div class="danger-badge">초기화</div></div></div>
-    <div class="ssec"><div class="ssec-title">정보</div><div class="srow"><div class="srow-label">MindTail v2.3.0</div></div><div class="srow"><div><div class="srow-label">이 앱은 의료 진단 도구가 아니에요</div><div class="srow-sub">반려견 행동 변화 기록 참고용이에요</div></div></div></div>
+    <div class="ssec"><div class="ssec-title">정보</div><div class="srow"><div class="srow-label">MindTail v2.4.0</div></div><div class="srow"><div><div class="srow-label">이 앱은 의료 진단 도구가 아니에요</div><div class="srow-sub">반려견 행동 변화 기록 참고용이에요</div></div></div></div>
   `;
 }
 // [fix] toggleAlarm이 renderSettings를 다시 호출해서 토글 상태 반영
@@ -573,9 +577,11 @@ function scheduleAlarm(timeStr){
   try{
     if(window._almTimer)clearTimeout(window._almTimer);
     const[h,m]=timeStr.split(":").map(Number);
+    const petName=lP()?.name||"반려견";
     if(swReg&&swReg.active){
-      try{swReg.active.postMessage({type:"SCHEDULE_ALARM",hour:h,minute:m});}catch(e){}
+      try{swReg.active.postMessage({type:"SCHEDULE_ALARM",hour:h,minute:m,petName});}catch(e){}
     }
+    // 앱이 열려있을 때 fallback 타이머 (SW가 없는 환경 대비)
     const now=new Date();const next=new Date();
     next.setHours(h,m,0,0);
     if(next<=now)next.setDate(next.getDate()+1);
@@ -587,19 +593,43 @@ function cancelAlarm(){
   try{
     if(swReg&&swReg.active)swReg.active.postMessage({type:"CANCEL_ALARM"});
     if(window._almTimer)clearTimeout(window._almTimer);
+    if(window._remindTimer)clearTimeout(window._remindTimer);
   }catch(e){}
 }
 
+// ─── 요일별 1차 알림 문구 (앱 fallback용) ───────────
+const LOC_MSG_PRIMARY=[
+  n=>[`오늘 ${n}는 어떻게 지냈나요? 🌙`,`일요일 저녁, ${n}의 하루를 짧게 기록해봐요`],
+  n=>[`${n}와 함께한 월요일은 어땠나요? 🐾`,`한 주의 시작, ${n}의 행동을 체크해봐요`],
+  n=>[`오늘 ${n}의 행동을 확인해볼까요? 🐾`,`${n}의 오늘 하루를 기록해봐요`],
+  n=>[`${n}, 오늘도 잘 지냈나요? 🐾`,`수요일 체크! ${n}의 행동 변화를 살펴봐요`],
+  n=>[`오늘 ${n}의 행동을 체크해봐요 🐾`,`${n}의 하루를 기록하면 변화를 알 수 있어요`],
+  n=>[`${n}와 함께한 하루 어땠나요? 🐾`,`주말 전 마지막 체크! ${n}의 오늘을 기록해봐요`],
+  n=>[`주말에도 ${n} 체크를 잊지 마세요 🐾`,`${n}의 주말 행동도 소중한 기록이에요`],
+];
 function fireLocalNotif(){
   try{
     const today=todayStr();
     if(lRec(today))return;
     if(typeof Notification==="undefined"||Notification.permission!=="granted")return;
     const p=lP();const name=p?.name||"반려견";
-    const opts={body:`오늘 ${name} 체크 아직 안 했어요! 10초면 돼요 🐾`,icon:"/icon-512.png",tag:"mindtail-daily",renotify:true};
-    // Android는 SW 통해서만 알림 가능
-    if(swReg){swReg.showNotification("MindTail 🐾",opts).catch(()=>{try{new Notification("MindTail 🐾",opts);}catch(e){}});}
-    else{try{new Notification("MindTail 🐾",opts);}catch(e){}}
+    const dow=new Date().getDay();
+    const[title,body]=LOC_MSG_PRIMARY[dow](name);
+    const opts={body,icon:"/icon-512.png",badge:"/icon-512.png",tag:"mindtail-primary",renotify:true,data:{action:"open_chat"}};
+    if(swReg){swReg.showNotification(title,opts).catch(()=>{try{new Notification(title,opts);}catch(e){}});}
+    else{try{new Notification(title,opts);}catch(e){}}
+    // 앱 fallback: 90분 후 리마인드
+    if(window._remindTimer)clearTimeout(window._remindTimer);
+    window._remindTimer=setTimeout(()=>{
+      try{
+        if(lRec(todayStr()))return;
+        const rname=lP()?.name||"반려견";
+        const rbody=`오늘 ${rname}의 기록이 아직 없어요 🐾`;
+        const ropts={body:rbody,icon:"/icon-512.png",tag:"mindtail-remind",renotify:true,data:{action:"open_chat"}};
+        if(swReg){swReg.showNotification("MindTail 🐾",ropts).catch(()=>{try{new Notification("MindTail 🐾",ropts);}catch(e){}});}
+        else{try{new Notification("MindTail 🐾",ropts);}catch(e){}}
+      }catch(e){}
+    },90*60*1000);
     const alm=lAlarm();if(alm.enabled)scheduleAlarm(alm.time);
   }catch(e){}
 }
@@ -610,14 +640,15 @@ function sendTestNotif(){
       showToast("먼저 알림 권한을 허용해주세요");reqNotifPerm();return;
     }
     const p=lP();const name=p?.name||"반려견";
-    const opts={body:`테스트 알림이에요! 오늘 ${name} 체크 해볼까요? 🐾`,icon:"/icon-512.png",tag:"mindtail-test"};
-    // Android는 SW 통해서만 알림 가능
+    const dow=new Date().getDay();
+    const[title,body]=LOC_MSG_PRIMARY[dow](name);
+    const opts={body,icon:"/icon-512.png",badge:"/icon-512.png",tag:"mindtail-test",data:{action:"open_chat"}};
     if(swReg){
-      swReg.showNotification("MindTail 🐾",opts)
+      swReg.showNotification(title,opts)
         .then(()=>showToast("테스트 알림을 보냈어요! 🔔"))
-        .catch(()=>{try{new Notification("MindTail 🐾",opts);showToast("테스트 알림을 보냈어요! 🔔");}catch(e){showToast("알림 실패 - 앱을 홈화면에서 실행해주세요");}});
+        .catch(()=>{try{new Notification(title,opts);showToast("테스트 알림을 보냈어요! 🔔");}catch(e){showToast("알림 실패 - 앱을 홈화면에서 실행해주세요");}});
     }else{
-      try{new Notification("MindTail 🐾",opts);showToast("테스트 알림을 보냈어요! 🔔");}
+      try{new Notification(title,opts);showToast("테스트 알림을 보냈어요! 🔔");}
       catch(e){showToast("알림 실패 - 앱을 홈화면에서 실행해주세요");}
     }
   }catch(e){showToast("알림 실패 - 앱을 홈화면에서 실행해주세요");}
@@ -648,14 +679,34 @@ function switchTab(tab){
 }
 // 설정/리포트 탭은 데이터 변경 시 캐시 무효화
 function invalidateCache(){_rendered.report=false;_rendered.settings=false;}
+// ─── SW → 앱 메시지 수신 (알림 클릭 시 화면 전환) ───
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.addEventListener('message',e=>{
+    if(e.data?.type==='NOTIF_CLICK'){
+      // 알림 클릭 → 챗봇 화면으로 이동
+      switchTab('chat');startChat();
+    }
+  });
+}
+// URL 파라미터로 액션 전달된 경우 처리 (앱이 닫혀있다 열릴 때)
+function handleUrlAction(){
+  try{
+    const params=new URLSearchParams(location.search);
+    const action=params.get('action');
+    if(action==='open_chat'){
+      history.replaceState(null,'',location.pathname);
+      setTimeout(()=>{switchTab('chat');startChat();},300);
+    }
+  }catch(e){}
+}
 function init(){
   updateHdr();
-  // [fix] SW 등록을 앱 초기화와 완전히 분리 - 에러나도 앱은 정상 동작
   setTimeout(()=>initSW(), 0);
   const p=lP();
   if(!p){document.getElementById("onboarding").classList.remove("hidden");return;}
   document.getElementById("onboarding").classList.add("hidden");
   renderHome();
+  handleUrlAction();
 }
 init();
 </script>
