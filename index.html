@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-CXCX76BPK5"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-CXCX76BPK5');
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>MindTail</title>
@@ -272,7 +280,7 @@ body{height:100%;height:-webkit-fill-available;background:#ccc3b8;font-family:-a
 <div class="toast" id="toast"></div>
 <script>
 // ─── GA4 이벤트 추적 ─────────────────────────────────
-const GA_ID='G-80ZJP7DN6J';
+const GA_ID='G-CXCX76BPK5';
 function logEvent(name,params={}){
   try{if(typeof gtag==='undefined')return;gtag('event',name,params);}catch(e){}
 }
