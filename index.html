@@ -1,15 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-80ZJP7DN6J"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-80ZJP7DN6J');
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>MindTail</title>
@@ -280,6 +271,11 @@ body{height:100%;height:-webkit-fill-available;background:#ccc3b8;font-family:-a
 <div class="confirm-modal" id="confirmModal"><div class="cbox"><div class="ctitle">전체 데이터를 초기화할까요?</div><div class="csub">모든 기록과 프로필이 삭제돼요. 이 작업은 되돌릴 수 없어요.</div><div class="cbtns"><button class="ccancel" onclick="document.getElementById('confirmModal').classList.remove('open')">취소</button><button class="cok" onclick="resetAll()">초기화</button></div></div></div>
 <div class="toast" id="toast"></div>
 <script>
+// ─── GA4 이벤트 추적 ─────────────────────────────────
+const GA_ID='G-80ZJP7DN6J';
+function logEvent(name,params={}){
+  try{if(typeof gtag==='undefined')return;gtag('event',name,params);}catch(e){}
+}
 const PFX='MINDTAIL_V2';
 const K={P:`${PFX}:profile`,IDX:`${PFX}:index`,META:`${PFX}:meta`,QH:`${PFX}:qhist`,AH:`${PFX}:ahist`,TK:`${PFX}:tracking`,rec:d=>`${PFX}:rec:${d}`,draft:d=>`${PFX}:draft:${d}`};
 const sg=k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch{return null;}};
@@ -387,7 +383,9 @@ function sifo(s){if(s>=75)return{label:"안정",cls:"stable"};if(s>=50)return{la
 function recSt(rec){if(!rec)return"stable";const mx=rec.answers.reduce((m,a)=>Math.max(m,a.score),0);return mx===0?"stable":mx===1?"watch":"change";}
 let CS={date:null,at:null,qs:[],idx:0,answers:[],hist:[],done:false};
 function saveDraft(){if(!CS.date)return;sDraft(CS.date,{date:CS.date,at:CS.at,qs:CS.qs,idx:CS.idx,answers:CS.answers,hist:CS.hist});}
-async function startChat(redo=false){const today=todayStr();const p=lP();if(!p)return;if(!redo){const ex=lRec(today);if(ex){showDone(ex,true);return;}const dr=lDraft(today);if(dr){restoreChat(dr);return;}}const qs=generateQs(today);CS={date:today,at:Date.now(),qs,idx:0,answers:[],hist:[],done:false};_lastCat=null;showChatUI();document.getElementById("chatMsgs").innerHTML="";document.getElementById("chatExplain").style.display="none";document.getElementById("chatAnsArea").style.display="none";updateProg();saveDraft();const meta=lMeta();const days=meta.lastCheckDate?diffDays(meta.lastCheckDate,today):0;const greet=days<=1?`안녕! 오늘 ${p.name} 어떻게 지냈어?`:days<=3?`오랜만이야! 최근 ${p.name} 잘 지냈어?`:`다시 만났어! ${p.name} 요즘 어떻게 지내?`;await botMsg(greet,300);await askQ();}
+async function startChat(redo=false){const today=todayStr();const p=lP();if(!p)return;if(!redo){const ex=lRec(today);if(ex){showDone(ex,true);return;}const dr=lDraft(today);if(dr){restoreChat(dr);return;}}const qs=generateQs(today);CS={date:today,at:Date.now(),qs,idx:0,answers:[],hist:[],done:false};_lastCat=null;showChatUI();document.getElementById("chatMsgs").innerHTML="";document.getElementById("chatExplain").style.display="none";document.getElementById("chatAnsArea").style.display="none";updateProg();saveDraft();
+  // GA4: 체크 시작
+  logEvent('check_started',{is_redo:redo});const meta=lMeta();const days=meta.lastCheckDate?diffDays(meta.lastCheckDate,today):0;const greet=days<=1?`안녕! 오늘 ${p.name} 어떻게 지냈어?`:days<=3?`오랜만이야! 최근 ${p.name} 잘 지냈어?`:`다시 만났어! ${p.name} 요즘 어떻게 지내?`;await botMsg(greet,300);await askQ();}
 function restoreChat(dr){CS={...dr,done:false};showChatUI();document.getElementById("chatMsgs").innerHTML="";CS.hist.forEach(m=>addBub(m.r,m.t));updateProg();if(CS.idx<CS.qs.length)showAns(CS.qs[CS.idx]);}
 function showChatUI(){document.getElementById("chatWrap").style.display="flex";document.getElementById("chatDone").style.display="none";}
 // ─── 카테고리별 설명 문구 (3-1번) ────────────────────
@@ -404,9 +402,12 @@ function showAns(q){document.getElementById("chatAnsArea").style.display="block"
 async function handleAns(q,opt){document.getElementById("chatAnsArea").style.display="none";document.getElementById("chatExplain").style.display="none";CS.hist.push({r:"user",t:opt.label});addBub("user",opt.label);CS.answers.push({cat:q.cat,tag:q.tag,q:q.q,answer:opt.label,score:opt.score});CS.idx++;updateProg();saveDraft();// 즉시 피드백 (4번): 1~2줄 간단 피드백
 const fb=CAT_FEEDBACK[q.cat]?.[opt.score];if(fb){await botMsg(fb,500);}if(CS.idx>=CS.qs.length){await new Promise(r=>setTimeout(r,300));finishChat();}else await askQ();}
 function finishChat(){const today=CS.date;const ah=lAH();ah.push({date:today,answers:CS.answers});if(ah.length>60)ah.splice(0,ah.length-60);ss(K.AH,ah);const qh=lQH();qh.push({date:today,qs:CS.qs.map(q=>({id:q.id,cat:q.cat,tag:q.tag}))});if(qh.length>30)qh.splice(0,qh.length-30);ss(K.QH,qh);updateTracking(CS.answers,today);const meta=lMeta();meta.sessionCount=(meta.sessionCount||0)+1;sMeta(meta);updateStreak(today);const ms=calcMS(today);const rec={date:today,answers:CS.answers,ms,status:recSt({answers:CS.answers})};sRec(today,rec);dDraft(today);CS.done=true;invalidateCache();
+  // GA4: 체크 완료 이벤트
+  const streak=lMeta().streak||1;
+  logEvent('daily_check_complete',{streak,mind_score:ms?.score??null,status:rec.status,session_count:meta.sessionCount});
+  if([3,7,14,30,60,100].includes(streak))logEvent('streak_milestone',{streak});
   // 체크 완료 → SW에 알려서 리마인드 취소
   try{if(swReg&&swReg.active)swReg.active.postMessage({type:"CHECKED_TODAY"});}catch(e){}
-  // 앱 fallback 리마인드 타이머도 취소
   if(window._remindTimer){clearTimeout(window._remindTimer);window._remindTimer=null;}
   showDone(rec,false);}
 function showDone(rec,already){document.getElementById("chatWrap").style.display="none";const cd=document.getElementById("chatDone");cd.style.display="flex";cd.style.flexDirection="column";const msgs=document.getElementById("doneMsgs");msgs.innerHTML="";if(!already&&CS.hist.length>0){CS.hist.forEach(m=>{const r=document.createElement("div");r.className=`brow ${m.r}`;r.innerHTML=m.r==="bot"?`<div class="bavatar">🐾</div><div class="bubble bot">${m.t}</div>`:`<div class="bubble user">${m.t}</div>`;msgs.appendChild(r);});}else{const r=document.createElement("div");r.className="brow bot";r.innerHTML=`<div class="bavatar">🐾</div><div class="bubble bot">오늘 기록은 이미 완료됐어! 내일 또 봐 🐾</div>`;msgs.appendChild(r);}const card=document.getElementById("doneCard");const mx=rec.answers.reduce((m,a)=>Math.max(m,a.score),0);const meta=lMeta();const streak=meta.streak||1;const ms=rec.ms;const compMsg=mx===0?"최근 인지 행동은 비교적 안정적으로 관찰돼.":mx===1?"일부 항목에서 경미한 변화가 관찰됐어. 지속되면 기록을 참고해봐.":"몇 가지 행동 변화가 관찰됐어. 기록을 계속 확인해보자.";card.innerHTML=`<div style="text-align:center;padding:4px 0 16px"><div style="font-size:24px;margin-bottom:8px">✅</div><div style="font-size:15px;font-weight:800;margin-bottom:4px">체크 완료!</div><div style="font-size:13px;color:var(--green-dark);font-weight:600">${lP()?.name||""}와 보낸 소중한 시간이 차곡차곡 쌓이고 있어요 🐾</div></div><div style="background:var(--green-pale);border-radius:var(--radius-sm);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div><div style="font-size:11px;font-weight:700;color:var(--green-dark);margin-bottom:2px">🔥 연속 체크</div><div style="font-family:'Nanum Myeongjo',serif;font-size:22px;font-weight:800;color:var(--green-dark)">${streak}일째</div></div>${ms&&ms.tot>=8?`<div style="text-align:right"><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Mind Score</div><div style="font-family:'Nanum Myeongjo',serif;font-size:28px;font-weight:800;color:var(--primary)">${ms.score}</div><div style="font-size:11px;color:var(--text-muted)">${sifo(ms.score).label}</div></div>`:`<div style="font-size:12px;color:var(--text-muted);text-align:right">기록이 쌓이면<br>Mind Score가<br>표시돼요</div>`}</div><div style="font-size:13px;color:var(--text-sub);line-height:1.7;padding:12px 14px;background:var(--surface2);border-radius:var(--radius-xs);border-left:3px solid var(--primary-light)">${compMsg}<br><span style="font-size:12px;color:var(--text-muted)">변화가 계속되면 병원 상담 때 이 기록을 참고해주세요.</span></div>${already?"":` <button class="redo-btn" onclick="redoToday()">오늘 기록 다시 하기</button>`}`;setTimeout(()=>{document.querySelector(".done-wrap").scrollTop=9999;},100);}
@@ -666,7 +667,9 @@ function sendTestNotif(){
 let obG="m",obN="y";
 function selG(v){obG=v;document.getElementById("ob-gm").classList.toggle("on",v==="m");document.getElementById("ob-gf").classList.toggle("on",v==="f");}
 function selN(v){obN=v;document.getElementById("ob-ny").classList.toggle("on",v==="y");document.getElementById("ob-nn").classList.toggle("on",v==="n");}
-function saveOB(){const name=document.getElementById("ob-name").value.trim();const birth=document.getElementById("ob-birth").value.trim();if(!name){showToast("강아지 이름을 입력해주세요");return;}if(!birth){showToast("생년월일을 입력해주세요");return;}sP({name,birth,breed:document.getElementById("ob-breed").value.trim(),weight:document.getElementById("ob-weight").value.trim(),gender:obG,neuter:obN,registeredAt:new Date().toISOString(),species:"dog",userId:"local_user"});document.getElementById("onboarding").classList.add("hidden");invalidateCache();updateHdr();renderHome();}
+function saveOB(){const name=document.getElementById("ob-name").value.trim();const birth=document.getElementById("ob-birth").value.trim();if(!name){showToast("강아지 이름을 입력해주세요");return;}if(!birth){showToast("생년월일을 입력해주세요");return;}sP({name,birth,breed:document.getElementById("ob-breed").value.trim(),weight:document.getElementById("ob-weight").value.trim(),gender:obG,neuter:obN,registeredAt:new Date().toISOString(),species:"dog",userId:"local_user"});document.getElementById("onboarding").classList.add("hidden");invalidateCache();updateHdr();
+  logEvent('onboarding_complete');
+  renderHome();}
 document.getElementById("ob-birth").addEventListener("input",fmtBirth);
 document.getElementById("ed-birth").addEventListener("input",fmtBirth);
 function updateHdr(){const p=lP();const d=new Date();const dw=["일","월","화","수","목","금","토"];document.getElementById("hdrDate").textContent=`${d.getMonth()+1}월 ${d.getDate()}일 (${dw[d.getDay()]})`;document.getElementById("hdrName").textContent=p?p.name:"—";}
@@ -692,7 +695,7 @@ function invalidateCache(){_rendered.report=false;_rendered.settings=false;}
 if('serviceWorker' in navigator){
   navigator.serviceWorker.addEventListener('message',e=>{
     if(e.data?.type==='NOTIF_CLICK'){
-      // 알림 클릭 → 챗봇 화면으로 이동
+      logEvent('notification_clicked',{source:'sw_message'});
       switchTab('chat');startChat();
     }
   });
@@ -704,16 +707,19 @@ function handleUrlAction(){
     const action=params.get('action');
     if(action==='open_chat'){
       history.replaceState(null,'',location.pathname);
+      logEvent('notification_clicked',{source:'url_action'});
       setTimeout(()=>{switchTab('chat');startChat();},300);
     }
   }catch(e){}
 }
 function init(){
   updateHdr();
-  setTimeout(()=>initSW(), 0);
+  setTimeout(()=>initSW(),0);
   const p=lP();
   if(!p){document.getElementById("onboarding").classList.remove("hidden");return;}
   document.getElementById("onboarding").classList.add("hidden");
+  // GA4: 앱 진입 (DAU/WAU/MAU 기준)
+  logEvent('app_open');
   renderHome();
   handleUrlAction();
 }
