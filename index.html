@@ -21,13 +21,12 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="MindTail">
 <style>
-:root{--bg:#f7f3ee;--bg2:#ede6db;--surface:#fff;--surface2:#faf7f3;--primary:#c8793f;--primary-light:#e09a62;--primary-pale:#fdeedd;--primary-dark:#a85e28;--green:#4a9e6f;--green-pale:#e6f4ed;--green-dark:#357a54;--amber:#d4861a;--amber-pale:#fef3e2;--red:#c0392b;--red-pale:#fdecea;--text:#1e1610;--text-sub:#6b5744;--text-muted:#a8917c;--border:#e4dbd0;--border-light:#ede8e1;--shadow-sm:0 1px 8px rgba(30,22,16,.06);--shadow:0 2px 16px rgba(30,22,16,.09);--radius:20px;--radius-sm:12px;--radius-xs:8px;--tab-h:64px;}
+:root{--bg:#f7f3ee;--bg2:#ede6db;--surface:#fff;--surface2:#faf7f3;--primary:#c8793f;--primary-light:#e09a62;--primary-pale:#fdeedd;--primary-dark:#a85e28;--green:#4a9e6f;--green-pale:#e6f4ed;--green-dark:#357a54;--amber:#d4861a;--amber-pale:#fef3e2;--red:#c0392b;--red-pale:#fdecea;--text:#1e1610;--text-sub:#6b5744;--text-muted:#a8917c;--border:#e4dbd0;--border-light:#ede8e1;--shadow-sm:0 1px 8px rgba(30,22,16,.06);--shadow:0 2px 16px rgba(30,22,16,.09);--radius:20px;--radius-sm:12px;--radius-xs:8px;--tab-h:64px;--app-h:100vh;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-/* [fix] Android Chrome 주소창 때문에 dvh 제거, fill-available 사용 */
-html{height:100%;height:-webkit-fill-available;}
-body{height:100%;height:-webkit-fill-available;background:#ccc3b8;font-family:-apple-system,sans-serif;color:var(--text);overflow:hidden;}
-/* [fix] 앱 높이 고정 - 탭바 잘림 방지 */
-#app{max-width:430px;margin:0 auto;height:100%;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden;box-shadow:0 0 60px rgba(0,0,0,.22);}
+html{height:100%;}
+body{height:100%;background:#ccc3b8;font-family:-apple-system,sans-serif;color:var(--text);overflow:hidden;}
+/* iOS PWA 높이 버그 수정 - JS로 --app-h 동적 계산 */
+#app{max-width:430px;margin:0 auto;height:var(--app-h);background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden;box-shadow:0 0 60px rgba(0,0,0,.22);}
 .header{height:56px;background:var(--surface);border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;z-index:20;}
 .header-logo{font-family:'Nanum Myeongjo',serif;font-size:22px;font-weight:800;color:var(--primary);}
 .hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:1px;}
@@ -42,9 +41,9 @@ body{height:100%;height:-webkit-fill-available;background:#ccc3b8;font-family:-a
 .content{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
 .screen{display:none;flex-direction:column;height:100%;overflow:hidden;}
 .screen.active{display:flex;}
-.scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
 .scroll-area::-webkit-scrollbar{display:none;}
-#onboarding{position:absolute;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;overflow-y:auto;}
+#onboarding{position:absolute;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 #onboarding.hidden{display:none;}
 #onboarding::-webkit-scrollbar{display:none;}
 .ob-hero{background:linear-gradient(155deg,#fff9f4,#fdeedd);padding:52px 28px 40px;}
@@ -75,7 +74,7 @@ body{height:100%;height:-webkit-fill-available;background:#ccc3b8;font-family:-a
 .check-start-btn{display:inline-flex;align-items:center;gap:8px;padding:13px 22px;background:var(--primary);color:#fff;border:none;border-radius:100px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;}
 .check-start-btn:active{background:var(--primary-dark);}
 .check-done-badge{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;background:rgba(74,158,111,.15);border-radius:100px;font-size:13px;font-weight:700;color:var(--green-dark);}
-.chat-wrap{display:flex;flex-direction:column;height:100%;}
+.chat-wrap{display:flex;flex-direction:column;height:100%;overflow:hidden;}
 .chat-top{background:var(--surface);padding:14px 20px 14px;border-bottom:1px solid var(--border-light);flex-shrink:0;}
 .chat-top-row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 .chat-top-title{font-size:15px;font-weight:800;}
@@ -88,7 +87,7 @@ body{height:100%;height:-webkit-fill-available;background:#ccc3b8;font-family:-a
 .pdot.done{background:var(--primary);}
 .pdot.active{background:var(--primary-light);transform:scale(1.3);}
 .chat-explain{background:var(--primary-pale);border-radius:var(--radius-xs);padding:10px 14px;margin:0 16px 0;font-size:12px;color:var(--primary-dark);line-height:1.6;border-left:3px solid var(--primary-light);animation:fadeUp .3s ease;}
-.chat-msgs{flex:1;overflow-y:auto;padding:20px 16px 12px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth;}
+.chat-msgs{flex:1;overflow-y:auto;padding:20px 16px 12px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
 .chat-msgs::-webkit-scrollbar{display:none;}
 .brow{display:flex;align-items:flex-end;gap:8px;animation:fadeUp .25s ease;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;}}
@@ -103,7 +102,7 @@ body{height:100%;height:-webkit-fill-available;background:#ccc3b8;font-family:-a
 .typing span:nth-child(2){animation-delay:.2s;}
 .typing span:nth-child(3){animation-delay:.4s;}
 @keyframes tb{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-6px);}}
-.chat-ans-area{background:var(--surface);border-top:1px solid var(--border-light);padding:14px 16px 16px;flex-shrink:0;}
+.chat-ans-area{background:var(--surface);border-top:1px solid var(--border-light);padding:14px 16px 16px;flex-shrink:0;padding-bottom:max(16px,env(safe-area-inset-bottom));}
 .ans-hint{font-size:11px;color:var(--text-muted);font-weight:700;text-align:center;margin-bottom:10px;}
 .ans-btns{display:flex;flex-direction:column;gap:8px;}
 .ans-btn{width:100%;padding:14px 16px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between;}
@@ -305,6 +304,17 @@ body{height:100%;height:-webkit-fill-available;background:#ccc3b8;font-family:-a
   </div>
 </div>
 <script>
+// ─── iOS PWA 뷰포트 높이 버그 수정 ───────────────────
+// window.innerHeight로 실제 보이는 높이를 CSS 변수에 직접 적용
+function fixVh(){
+  const h=window.innerHeight;
+  document.documentElement.style.setProperty('--app-h', h+'px');
+  document.body.style.height=h+'px';
+}
+fixVh();
+// 화면 회전 / 키보드 올라올 때도 재계산
+window.addEventListener('resize',fixVh);
+window.addEventListener('orientationchange',()=>setTimeout(fixVh,200));
 // ─── GA4 이벤트 추적 ─────────────────────────────────
 const GA_ID='G-CXCX76BPK5';
 function logEvent(name,params={}){
@@ -554,7 +564,7 @@ function renderSettings(){
       </div>
     </div>
     <div class="ssec"><div class="ssec-title">데이터</div><div class="srow" onclick="exportData()"><div><div class="srow-label">데이터 JSON 복사</div><div class="srow-sub">기록 전체를 클립보드에 복사해요</div></div><div style="color:var(--text-muted)">→</div></div><div class="srow" onclick="document.getElementById('confirmModal').classList.add('open')"><div><div class="srow-label danger">전체 데이터 초기화</div><div class="srow-sub">모든 기록과 프로필이 삭제돼요</div></div><div class="danger-badge">초기화</div></div></div>
-    <div class="ssec"><div class="ssec-title">정보</div><div class="srow"><div class="srow-label">MindTail v2.5.0</div></div><div class="srow"><div><div class="srow-label">이 앱은 의료 진단 도구가 아니에요</div><div class="srow-sub">반려견 행동 변화 기록 참고용이에요</div></div></div></div>
+    <div class="ssec"><div class="ssec-title">정보</div><div class="srow"><div class="srow-label">MindTail v2.5.1</div></div><div class="srow"><div><div class="srow-label">이 앱은 의료 진단 도구가 아니에요</div><div class="srow-sub">반려견 행동 변화 기록 참고용이에요</div></div></div></div>
   `;
 }
 // [fix] toggleAlarm이 renderSettings를 다시 호출해서 토글 상태 반영
@@ -600,9 +610,21 @@ function initSW(){
 
 function reqNotifPerm(){
   try{
-    if(typeof Notification==="undefined"){showToast("이 브라우저는 알림을 지원하지 않아요");return;}
+    if(typeof Notification==="undefined"){
+      // iOS Safari 브라우저에서 실행 중이면 홈화면 추가 안내
+      if(isIos()&&!isInStandaloneMode()){
+        document.getElementById('iosPrompt').classList.add('show');
+        return;
+      }
+      showToast("이 브라우저는 알림을 지원하지 않아요");return;
+    }
     Notification.requestPermission().then(perm=>{
-      if(perm==="granted")showToast("알림이 허용됐어요! ✅");
+      if(perm==="granted"){
+        showToast("알림이 허용됐어요! ✅");
+        // 알림 허용 즉시 스케줄 등록
+        const alm=lAlarm();
+        if(alm.enabled)scheduleAlarm(alm.time);
+      }
       else if(perm==="denied")showToast("알림이 차단됐어요. 브라우저 설정에서 허용해주세요.");
       renderSettings();
     });
